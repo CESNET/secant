@@ -1,1 +1,2 @@
-oneuser login -v user --x509 --cert usercert.pem --key userkey.pem --force
+export ONE_XMLRPC=https://cloud.metacentrum.cz:6443/RPC2
+oneuser login secant --cert /root/.secant/secant-cert.pem --key /root/.secant/secant-key.pem --x509
