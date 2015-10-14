@@ -12,3 +12,6 @@ rm ${lynis_directory}/lynis-${lynis_version}.tar.gz
 
 # Install Nmap
 sudo apt-get install nmap -y
+
+# Install xmlscarlet
+sudo apt-get install xmlstarlet -y

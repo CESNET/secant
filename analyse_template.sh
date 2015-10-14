@@ -1,8 +1,8 @@
 #!/bin/bash
 
 TEMPLATE_ID=$1
-
 VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
+source secant.conf
 
 if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
   VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
@@ -61,16 +61,21 @@ if [ -z "$ip_address_for_ssh" ]; then
 	exit 1
 fi
 
+# Check if directory for reports already exist, if not create
+if [[ ! -e $reports_directory ]]; then
+    mkdir $reports_directory
+fi
+
 #Run external tests
 for filename in external_tests/*/
 do
- (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> /tmp/reports/report_$TEMPLATE_ID)
+ (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $reports_directory/report_$TEMPLATE_ID)
 done
 
 #Run internal tests
 for filename in internal_tests/*/
 do
- (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> /tmp/reports/report_$TEMPLATE_ID)
+ (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $reports_directory/report_$TEMPLATE_ID)
 done
 
 echo "[INFO] Successfully reported"
