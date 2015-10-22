@@ -1,12 +1,14 @@
 #!/bin/bash
 
+debug() { echo "[DEBUG] $*" >&2; }
+
 TEMPLATE_ID=$1
 VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
 source secant.conf
 
 if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
   VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
-  echo "[INFO] Template successfully instantiated: $VM_ID"
+  echo "[INFO] Template successfully instantiated: $TEMPLATE_ID"
 else
   echo $VM_ID
   exit 1
@@ -56,7 +58,7 @@ do
 done
 
 if [ -z "$ip_address_for_ssh" ]; then
-	echo "[ERROR] Open SSH port has not been detected"
+	echo "[ERROR] TemplateID: $TEMPLATE_ID Open SSH port has not been detected"
 	onevm delete $VM_ID
 	exit 1
 fi
@@ -78,7 +80,7 @@ do
  (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $reports_directory/report_$TEMPLATE_ID)
 done
 
-echo "[INFO] Successfully reported"
+debug "Successfully reported"
 
 onevm delete $VM_ID
 rm $TEMP_FILE_PATH
