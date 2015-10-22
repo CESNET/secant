@@ -6,7 +6,8 @@ REPORT_LOCATION='/var/log/lynis-report.dat'
 echo [`date +"%T"`] "### Lynis Report ###"
 echo [`date +"%T"`] "===---------------------------------------------------------------==="
 
-while ./lynis --quite cd > /dev/null; do sleep 1; done
+./lynis -c --cronjob > /dev/null &
+wait $!
 
 if [ -f $REPORT_LOCATION ];
 then
