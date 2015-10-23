@@ -3,8 +3,8 @@
 cd /tmp/lynis
 
 REPORT_LOCATION='/var/log/lynis-report.dat'
-echo [`date +"%T"`] "### Lynis Report ###"
-echo [`date +"%T"`] "===---------------------------------------------------------------==="
+echo "### Lynis Report ###"
+echo "===---------------------------------------------------------------==="
 
 ./lynis -c --cronjob > /dev/null &
 wait $!
@@ -15,7 +15,7 @@ then
    grep 'Suggestion' /var/log/lynis.log
 
 else
-   echo [`date +"%T"`] "[ERROR] Missing Lynis report"
+   echo "[ERROR] Missing Lynis report"
 fi
 
-echo [`date +"%T"`] "===---------------------------------------------------------------==="
+echo "===---------------------------------------------------------------==="

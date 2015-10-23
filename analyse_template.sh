@@ -1,6 +1,6 @@
 #!/bin/bash
 
-debug() { echo "[DEBUG] $*" >&2; }
+logging() { echo `date +"%Y-%d-%m %H:%M:%S"` "$*" >> /var/log/secant.log; }
 
 TEMPLATE_ID=$1
 VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
@@ -8,9 +8,9 @@ source secant.conf
 
 if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
   VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
-  echo "[INFO] Template successfully instantiated: $TEMPLATE_ID"
+  logging "[$TEMPLATE_ID] INFO: Template successfully instantiated."
 else
-  echo $VM_ID
+  logging "[$TEMPLATE_ID] ERROR: $VM_ID."
   exit 1
 fi
 
@@ -28,7 +28,8 @@ do
 	lcm_state=$(xmlstarlet sel -t -v '//LCM_STATE/text()' -n $TEMP_FILE_PATH)
 done
 
-echo "[INFO] VM: $vm_name is now running"
+logging "[$TEMPLATE_ID] INFO: Virtual Machine $vm_name is now running."
+
 
 # Get IPs
 query='//NIC/IP/text()'
@@ -38,14 +39,14 @@ while IFS= read -r entry; do
 done < <(xmlstarlet sel -t -v "$query" -n $TEMP_FILE_PATH)
 
 number_of_attempts=0
-while [ -z "$ip_address_for_ssh" ] && [ $number_of_attempts -lt 7 ]
+while [ -z "$ip_address_for_ssh" ] && [ $number_of_attempts -lt 15 ]
 do
 	ip_address_for_ssh=""
 	for ip in "${ipAddresses[@]}"
 	do
 		ssh_state=$(nmap $ip -PN -p ssh | egrep -o 'open|closed|filtered')
 		if [ "$ssh_state" == "open" ]; then
-			echo "[INFO] Open SSH port has been successfully detected"
+		    logging "[$TEMPLATE_ID] INFO: Open SSH port has been successfully detected."
 			ip_address_for_ssh=$ip
 			break;
 		fi
@@ -58,7 +59,7 @@ do
 done
 
 if [ -z "$ip_address_for_ssh" ]; then
-	echo "[ERROR] TemplateID: $TEMPLATE_ID Open SSH port has not been detected"
+    logging "[$TEMPLATE_ID] ERROR: Open SSH port has not been detected."
 	onevm delete $VM_ID
 	exit 1
 fi
@@ -67,6 +68,9 @@ fi
 if [[ ! -e $reports_directory ]]; then
     mkdir $reports_directory
 fi
+
+# Wait 25 seconds befor first test
+sleep 25
 
 #Run external tests
 for filename in external_tests/*/
@@ -80,7 +84,6 @@ do
  (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $reports_directory/report_$TEMPLATE_ID)
 done
 
-debug "Successfully reported"
-
 onevm delete $VM_ID
+logging "[$TEMPLATE_ID] INFO: Delete Virtual Machine $VM_ID."
 rm $TEMP_FILE_PATH

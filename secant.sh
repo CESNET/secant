@@ -10,9 +10,9 @@ waitall() {
       if kill -0 "$pid" 2>/dev/null; then
         set -- "$@" "$pid"
       elif wait "$pid"; then
-        debug "[${temp_id_with_pid[${pid}]}] INFO: Analysis completed."
+        logging "[${temp_id_with_pid[${pid}]}] INFO: Analysis completed."
       else
-        debug "[${temp_id_with_pid[${pid}]}] ERROR: Analysis failed."
+        logging "[${temp_id_with_pid[${pid}]}] ERROR: Analysis failed."
         ((++errors))
       fi
     done
@@ -21,7 +21,7 @@ waitall() {
    done
  }
 
-debug() { echo `date +"%Y-%d-%m %H:%M:%S"` "$*" >&2; }
+logging() { echo `date +"%Y-%d-%m %H:%M:%S"` "$*" >> /var/log/secant.log; }
 
 TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '12,14p')) # GEt first 5 templates ids
 
