@@ -69,6 +69,9 @@ if [[ ! -e $reports_directory ]]; then
     mkdir $reports_directory
 fi
 
+# send sigstop to cloud-init
+ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'kill -SIGSTOP `pgrep cloud-init`'
+
 # Wait 25 seconds befor first test
 sleep 25
 

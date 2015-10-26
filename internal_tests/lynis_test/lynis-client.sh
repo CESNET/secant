@@ -6,8 +6,7 @@ REPORT_LOCATION='/var/log/lynis-report.dat'
 echo "### Lynis Report ###"
 echo "===---------------------------------------------------------------==="
 
-./lynis -c --cronjob > /dev/null &
-wait $!
+./lynis -c --cronjob > /dev/null
 
 if [ -f $REPORT_LOCATION ];
 then
