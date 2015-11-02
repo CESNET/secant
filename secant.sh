@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+source secant.conf
+source include/functions.sh
+
 declare -A temp_id_with_pid
 
 waitall() {
@@ -21,9 +24,11 @@ waitall() {
    done
  }
 
-logging() { echo `date +"%Y-%d-%m %H:%M:%S"` "$*" >> /var/log/secant.log; }
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '12,14p')) # GEt first 5 templates ids
+export ONE_XMLRPC=$ONE_XMLRPC
+oneuser login secant --cert /root/.secant/secant-cert.pem --key /root/.secant/secant-key.pem --x509 --force
+
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '12,12p')) # GEt first 5 templates ids
 
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
