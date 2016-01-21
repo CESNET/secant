@@ -28,9 +28,20 @@ waitall() {
 export ONE_XMLRPC=$ONE_XMLRPC
 oneuser login secant --cert /root/.secant/secant-cert.pem --key /root/.secant/secant-key.pem --x509 --force
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '13,13p')) # GEt first 5 templates ids
-
+#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '13,13p')) # Get first 5 templates ids
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
+query='//NIFTY_ID' # attribute which determines that template should be analyzed
 for TEMPLATE_ID in "${TEMPLATES[@]}"
+do
+    onetemplate show $TEMPLATE_ID -x > /tmp/tmp_"$TEMPLATE_ID".xml
+    NIFTY_ID=$(xmlstarlet sel -t -v "$query" -n /tmp/tmp_"$TEMPLATE_ID".xml)
+    if [ -n "$NIFTY_ID" ]; then
+        TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
+    fi
+    rm -f /tmp/tmp_"$TEMPLATE_ID".xml
+done
+
+for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"
 do
     if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
         ./analyse_template.sh $TEMPLATE_ID &
