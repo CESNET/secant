@@ -97,9 +97,9 @@ sleep 25
 
 # send sigstop to cloud-init
 logging "[$TEMPLATE_ID] DEBUG: Send SIGSTOP to cloud-init."
-ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'kill -SIGSTOP `pgrep cloud-init`'
+ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'kill -SIGSTOP `pgrep cloud-init`'
 
-CLOUD_INIT_PROCESS_STATUS=$(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'ps cax | grep cloud-init')
+CLOUD_INIT_PROCESS_STATUS=$(ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'ps cax | grep cloud-init')
 CLOUD_INIT_PROCESS_STATUS=$(echo $CLOUD_INIT_PROCESS_STATUS | awk '{print $3}')
 
 if [ "$CLOUD_INIT_PROCESS_STATUS" == "T" ]; then

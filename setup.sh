@@ -17,3 +17,5 @@ sudo apt-get install nmap -y
 
 # Install xmlscarlet
 sudo apt-get install xmlstarlet -y
+
+pip install lxml
