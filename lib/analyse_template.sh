@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source secant.conf
+source conf/secant.conf
 source include/functions.sh
 
 delete_template_and_images(){
@@ -110,14 +110,15 @@ fi
 
 # Create file to save the report
 REPORT_PATH="$reports_directory/report_$TEMPLATE_ID"
-if [[ -e $REPORT_PATH ]] ; then
+if [[ -e $REPORT_PATH.xml ]] ; then
     i=2
-    while [[ -e $REPORT_PATH-$i ]] ; do
+    while [[ -e $REPORT_PATH-$i.xml ]] ; do
         let i++
     done
     REPORT_PATH=$REPORT_PATH-$i
 fi
-
+echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $REPORT_PATH
+echo "<SECANT>" >> $REPORT_PATH
 #Run external tests
 logging "[$TEMPLATE_ID] INFO: Starting external tests..."
 for filename in external_tests/*/
@@ -131,6 +132,24 @@ for filename in internal_tests/*/
 do
  (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $REPORT_PATH)
 done
+
+echo "</SECANT>" >> $REPORT_PATH
+
+# Remove white lines from file
+sed '/^$/d' $REPORT_PATH > $REPORT_PATH.xml
+rm $REPORT_PATH
+
+# Create file to save the assessment result
+RESULT_PATH="$reports_directory/result_$TEMPLATE_ID"
+if [[ -e $RESULT_PATH.xml ]] ; then
+    i=2
+    while [[ -e $RESULT_PATH-$i.xml ]] ; do
+        let i++
+    done
+    RESULT_PATH=$RESULT_PATH-$i
+fi
+echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $RESULT_PATH.xml
+python lib/assessment.py $TEMPLATE_ID $REPORT_PATH.xml >> $RESULT_PATH.xml
 
 logging "[$TEMPLATE_ID] INFO: Delete Virtual Machine $VM_ID."
 onevm delete $VM_ID

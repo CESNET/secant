@@ -1,0 +1,32 @@
+import re
+import sys
+import fileinput
+from lxml import etree
+
+pakiti =  etree.Element('PAKITI_TEST')
+
+pakiti_status = sys.stdin.readline()
+
+if pakiti_status == 'ERROR':
+    error = etree.SubElement(pakiti, "ERROR")
+    error.text = "Pakiti error appears during data processing."
+else:
+    pkg_count = 0
+    for line in sys.stdin.readlines():
+        pkg_count += 1
+        pkg_list = re.split('\s+', line)
+        pkg = etree.SubElement(pakiti, "PKG")
+        pkg.text = pkg_list[0] + ", " + pkg_list[1] + ", " + pkg_list[2]
+        # name = etree.SubElement(pkg, "NAME")
+        # name.text = pkg_list[0]
+        # version = etree.SubElement(pkg, "VERSION")
+        # version.text = pkg_list[1]
+        # arch = etree.SubElement(pkg, "ARCH")
+        # arch.text = pkg_list[2]
+
+    if pkg_count == 0:
+        pakiti.text = "No vulnerable packages are detected."
+
+print etree.tostring(pakiti,pretty_print=True)
+
+
