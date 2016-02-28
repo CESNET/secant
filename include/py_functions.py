@@ -25,6 +25,3 @@ def setLogging():
     logging.basicConfig(format='%(asctime)s %(message)s',
                         filename=getSettingsFromBashConfFile('conf/secant.conf',
                         'log_file'),level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
-    root = logging.getLogger()
-    ch = logging.StreamHandler(sys.stdout)
-    root.addHandler(ch)
