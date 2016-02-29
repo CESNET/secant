@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Load a configuration from secant.conf
-source secant.conf
+source conf/secant.conf
 
 # Install Lynis
 # https://github.com/CISOfy/lynis.git
@@ -18,4 +18,10 @@ sudo apt-get install nmap -y
 # Install xmlscarlet
 sudo apt-get install xmlstarlet -y
 
+# Install pip
+sudo apt-get install python-pip python-dev build-essential
+sudo pip install --upgrade pip
+sudo pip install --upgrade virtualenv
+
+# Install lxml
 pip install lxml

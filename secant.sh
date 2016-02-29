@@ -26,7 +26,7 @@ waitall() {
 
 print_ascii_art
 export ONE_XMLRPC=$ONE_XMLRPC
-oneuser login secant --cert /root/.secant/secant-cert.pem --key /root/.secant/secant-key.pem --x509 --force
+oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force
 
 TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '11,11p')) # Get first 5 templates ids
 #TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
