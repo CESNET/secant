@@ -23,11 +23,11 @@ During the entire assessment process details about the process are stored in a l
 
 ######Individual tests
 
-~~**External tests**~~
+**External tests**
 - `nmap_test` - scan ports with [Nmap](https://nmap.org). Ports which should be closed can be specified in `conf/assessment.conf`
 - `ssh_authentication_test` - check if SSH password authentication is allowed. If yes, test ends unsuccessfully.  
 
-~~**Internal tests**~~
+**Internal tests**
 - `lynis_test` - upload [Lynis](https://cisofy.com/lynis/) (security auditing tool) to a virtual machine. Lynis scans the system and generate a report. Which Lynis warnings or suggestions will be considered as critical, can be specified in conf/secant.conf. If some of these critical warnings or suggestions appear, test ends unsuccessfully. 
 - `pakiti_test` - test the system against [Pakiti3](https://github.com/CESNET/pakiti3) to find packages with critical vulnerabilities. 
 
