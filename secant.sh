@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 source conf/secant.conf
-source include/functions.sh
+(cd include && source functions.sh && cd ..)
 
 declare -A temp_id_with_pid
 
@@ -15,7 +15,7 @@ waitall() {
       elif wait "$pid"; then
         logging "[${temp_id_with_pid[${pid}]}] INFO: Analysis completed."
       else
-        logging "[${temp_id_with_pid[${pid}]}] ERROR: Analysis failed."
+        logging "[${temp_id_with_pid[${pid}]}] ERROR:CD .. Analysis failed."
         ((++errors))
       fi
     done
@@ -25,30 +25,43 @@ waitall() {
  }
 
 print_ascii_art
-export ONE_XMLRPC=$ONE_XMLRPC
-oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force
+logging "[SECANT] DEBUG: Start Secant."
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '11,11p')) # Get first 5 templates ids
+export ONE_XMLRPC=$ONE_XMLRPC
+oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
+
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '10,10p')) # Get first 5 templates ids
 #TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
+
 query='//NIFTY_ID' # attribute which determines that template should be analyzed
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
-    onetemplate show $TEMPLATE_ID -x > /tmp/tmp_"$TEMPLATE_ID".xml
-    NIFTY_ID=$(xmlstarlet sel -t -v "$query" -n /tmp/tmp_"$TEMPLATE_ID".xml)
-    if [ -z "$NIFTY_ID" ]; then # n - for not empty
+    #NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
+    #if [ -n "$NIFTY_ID" ]; then # n - for not empty
         TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
-    fi
-    rm -f /tmp/tmp_"$TEMPLATE_ID".xml
+    #fi
 done
 
-for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"
-do
-    if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
-        ./lib/analyse_template.sh $TEMPLATE_ID &
-        template_pid=$!
-        pids="$pids $template_pid"
-        temp_id_with_pid+=( [$template_pid]=$TEMPLATE_ID)
-    fi
-done
+#TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID")
+TEMPLATE_IDENTIFIER=$TEMPLATE_ID
+if [ ${#TEMPLATES_FOR_ANALYSIS[@]} -eq 0 ]; then
+    logging "[SECANT] DEBUG: No templates for analysis."
+else
+    for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"
+    do
+        if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
+
+            # Check if directory for reports already exist, if not create
+            if [[ ! -e $reports_directory ]]; then
+                mkdir $reports_directory
+            fi
+
+            ./lib/analyse_template.sh $TEMPLATE_ID $TEMPLATE_IDENTIFIER &
+            template_pid=$!
+            pids="$pids $template_pid"
+            temp_id_with_pid+=( [$template_pid]=$TEMPLATE_ID)
+        fi
+    done
+fi
 
 waitall $pids

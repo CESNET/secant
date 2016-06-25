@@ -1,157 +1,168 @@
 #!/bin/bash
 
-source conf/secant.conf
-source include/functions.sh
+TEMPLATE_ID=$1
+TEMPLATE_IDENTIFIER=$2
+
+DEFAULT_SECANT_CONF_PATH=../conf/secant.conf
+SECANT_CONF_PATH=${3-$DEFAULT_SECANT_CONF_PATH}
+source "$SECANT_CONF_PATH"
+
+DEFAULT_FUNCTIONS_FILE_PATH=../include/functions.sh
+FUNCTIONS_FILE_PATH=${4-$DEFAULT_FUNCTIONS_FILE_PATH}
+source "$FUNCTIONS_FILE_PATH" ../conf/secant.conf
+
+# Create folder to save the assessment result
+FOLDER_PATH=$reports_directory/$TEMPLATE_IDENTIFIER
+
+# Check from which folder script is running
+CURRENT_DIRECTORY=${PWD##*/}
+EXTERNAL_TESTS_FOLDER_PATH=
+INTERNAL_TESTS_FOLDER_PATH=
+if [[ CURRENT_DIRECTORY=${PWD##*/} -eq 'lib' ]] ; then
+	EXTERNAL_TESTS_FOLDER_PATH=../external_tests
+	INTERNAL_TESTS_FOLDER_PATH=../external_tests
+else
+	EXTERNAL_TESTS_FOLDER_PATH=external_tests
+	INTERNAL_TESTS_FOLDER_PATH=external_tests
+fi
+
+if [[ ! -d $FOLDER_PATH ]] ; then
+	i=2
+	while [[ -d $FOLDER_PATH-$i ]] ; do
+       	let i++
+  	done
+    FOLDER_PATH=$FOLDER_PATH-$i
+    mkdir -p $FOLDER_PATH
+fi
 
 delete_template_and_images(){
-	TEMPLATE_ID=$1
-	TEMP_FILE_PATH="/tmp/tmp_$TEMPLATE_ID.xml"
-	onetemplate show $TEMPLATE_ID -x > $TEMP_FILE_PATH
-
 	# Get Template Images
 	query='//DISK/IMAGE/text()'
 	images=()
 	while IFS= read -r entry; do
 	  images+=( "$entry" )
-	done < <(xmlstarlet sel -t -v "$query" -n $TEMP_FILE_PATH)
+	done < <(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query" -n)
 
 	for image_name in "${images[@]}"
 	do
 		oneimage delete $image_name
-		logging "[$TEMPLATE_ID] INFO: Delete Image $image_name."
+		logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Image $image_name."
 	done
 
 	onetemplate delete $TEMPLATE_ID
-	logging "[$TEMPLATE_ID] INFO: Delete Template $TEMPLATE_ID."
-	rm $TEMP_FILE_PATH
+	logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Template $TEMPLATE_ID."
 }
-TEMPLATE_ID=$1
-VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
 
-
-if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
-  VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
-  logging "[$TEMPLATE_ID] INFO: Template successfully instantiated."
-else
-  logging "[$TEMPLATE_ID] ERROR: $VM_ID."
-  exit 1
-fi
-
-TEMP_FILE_PATH="/tmp/tmp_$VM_ID.xml"
-
-onevm show $VM_ID -x > $TEMP_FILE_PATH
-lcm_state=$(xmlstarlet sel -t -v '//LCM_STATE/text()' -n $TEMP_FILE_PATH)
-vm_name=$(xmlstarlet sel -t -v '//NAME/text()' -n $TEMP_FILE_PATH)
-
-# Wait for Running status
-while [ $lcm_state -ne 3 ]
+for RUN_WITH_CONTEXT_SCRIPT in false true
 do
-	sleep 5s
-	onevm show $VM_ID -x > $TEMP_FILE_PATH
-	lcm_state=$(xmlstarlet sel -t -v '//LCM_STATE/text()' -n $TEMP_FILE_PATH)
-done
+	if ! $RUN_WITH_CONTEXT_SCRIPT; then
+		logging "[$TEMPLATE_IDENTIFIER] INFO: Start first run without contextualization script."
+	else
+		logging "[$TEMPLATE_IDENTIFIER] INFO: Start second run with contextualization script."
+	fi
 
-logging "[$TEMPLATE_ID] INFO: Virtual Machine $vm_name is now running."
+	VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
+	if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
+	  VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
+	  logging "[$TEMPLATE_IDENTIFIER] INFO: Template successfully instantiated."
+	else
+	  logging "[$TEMPLATE_IDENTIFIER] ERROR: $VM_ID."
+	  exit 1
+	fi
 
+	lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
+	vm_name=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//NAME/text()' -n)
 
-# Get IPs
-query='//NIC/IP/text()'
-ipAddresses=()
-while IFS= read -r entry; do
-  ipAddresses+=( "$entry" )
-done < <(xmlstarlet sel -t -v "$query" -n $TEMP_FILE_PATH)
-
-number_of_attempts=0
-while [ -z "$ip_address_for_ssh" ] && [ $number_of_attempts -lt 15 ]
-do
-	ip_address_for_ssh=""
-	for ip in "${ipAddresses[@]}"
+	# Wait for Running status
+	while [ $lcm_state -ne 3 ]
 	do
-		ssh_state=$(nmap $ip -PN -p ssh | egrep -o 'open|closed|filtered')
-		if [ "$ssh_state" == "open" ]; then
-		    logging "[$TEMPLATE_ID] INFO: Open SSH port has been successfully detected, IP address: $ip"
-			ip_address_for_ssh=$ip
-			break;
+		sleep 5s
+		lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
+	done
+
+	logging "[$TEMPLATE_IDENTIFIER] INFO: Virtual Machine $vm_name is now running."
+
+
+	# Get IPs
+	query='//NIC/IP/text()'
+	ipAddresses=()
+	while IFS= read -r entry; do
+	  ipAddresses+=( "$entry" )
+	done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
+
+	# Wait 25 seconds befor first test
+	sleep 25
+
+	# Send sigstop to cloud-init
+	# No need for this step if context script does not contain reboot command
+	#logging "[$TEMPLATE_IDENTIFIER] DEBUG: Send SIGSTOP to cloud-init."
+	#ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'kill -SIGSTOP `pgrep cloud-init`'
+	#
+	#CLOUD_INIT_PROCESS_STATUS=$(ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'ps cax | grep cloud-init')
+	#CLOUD_INIT_PROCESS_STATUS=$(echo $CLOUD_INIT_PROCESS_STATUS | awk '{print $3}')
+	#
+	#if [ "$CLOUD_INIT_PROCESS_STATUS" == "T" ]; then
+	#	logging "[$TEMPLATE_IDENTIFIER] DEBUG: Process cloud-init successfully stopped."
+	#	else
+	#	logging "[$TEMPLATE_IDENTIFIER] DEBUG: Process cloud-init still running."
+	#fi
+
+	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/report
+	echo "<SECANT>" >> $FOLDER_PATH/report
+
+	#Run external tests
+	logging "[$TEMPLATE_IDENTIFIER] INFO: Starting external tests..."
+	for filename in EXTERNAL_TESTS_FOLDER_PATH/*/
+	do
+	 (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER >> $FOLDER_PATH/report)
+	done
+
+	number_of_attempts=0
+	while [ -z "$ip_address_for_ssh" ] && [ $number_of_attempts -lt 15 ]
+	do
+		ip_address_for_ssh=""
+		for ip in "${ipAddresses[@]}"
+		do
+			ssh_state=$(nmap $ip -PN -p ssh | egrep -o 'open|closed|filtered')
+			if [ "$ssh_state" == "open" ]; then
+				logging "[$TEMPLATE_IDENTIFIER] INFO: Open SSH port has been successfully detected, IP address: $ip"
+				ip_address_for_ssh=$ip
+				break;
+			fi
+		done
+
+		if [ -z "$ip_address_for_ssh" ]; then
+			((number_of_attempts++))
+			sleep 5s
 		fi
 	done
-	
+
+	#Run internal tests
 	if [ -z "$ip_address_for_ssh" ]; then
-		((number_of_attempts++))
-		sleep 5s
-	fi
-done
-
-if [ -z "$ip_address_for_ssh" ]; then
-    logging "[$TEMPLATE_ID] ERROR: Open SSH port has not been detected."
-	onevm delete $VM_ID
-	exit 1
-fi
-
-# Check if directory for reports already exist, if not create
-if [[ ! -e $reports_directory ]]; then
-    mkdir $reports_directory
-fi
-
-# Wait 25 seconds befor first test
-sleep 25
-
-# send sigstop to cloud-init
-logging "[$TEMPLATE_ID] DEBUG: Send SIGSTOP to cloud-init."
-ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'kill -SIGSTOP `pgrep cloud-init`'
-
-CLOUD_INIT_PROCESS_STATUS=$(ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'ps cax | grep cloud-init')
-CLOUD_INIT_PROCESS_STATUS=$(echo $CLOUD_INIT_PROCESS_STATUS | awk '{print $3}')
-
-if [ "$CLOUD_INIT_PROCESS_STATUS" == "T" ]; then
-	logging "[$TEMPLATE_ID] DEBUG: Process cloud-init successfully stopped."
+		logging "[$TEMPLATE_IDENTIFIER] ERROR: Open SSH port has not been detected."
+		onevm delete $VM_ID
+		#exit 1
 	else
-	logging "[$TEMPLATE_ID] DEBUG: Process cloud-init still running."
-fi
+		logging "[$TEMPLATE_IDENTIFIER] INFO: Starting internal tests..."
+		for filename in INTERNAL_TESTS_FOLDER_PATH/*/
+		do
+		 (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $FOLDER_PATH/report)
+		done
+	fi
 
-# Create file to save the report
-REPORT_PATH="$reports_directory/report_$TEMPLATE_ID"
-if [[ -e $REPORT_PATH.xml ]] ; then
-    i=2
-    while [[ -e $REPORT_PATH-$i.xml ]] ; do
-        let i++
-    done
-    REPORT_PATH=$REPORT_PATH-$i
-fi
-echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $REPORT_PATH
-echo "<SECANT>" >> $REPORT_PATH
-#Run external tests
-logging "[$TEMPLATE_ID] INFO: Starting external tests..."
-for filename in external_tests/*/
-do
- (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $REPORT_PATH)
+	echo "</SECANT>" >> $FOLDER_PATH/report
+
+	# Remove white lines from file
+	sed '/^$/d' $FOLDER_PATH/report > $FOLDER_PATH/report.xml
+	rm -f $FOLDER_PATH/report
+
+	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/assessment_result.xml
+	python lib/assessment.py $TEMPLATE_ID $FOLDER_PATH/report.xml >> $FOLDER_PATH/assessment_result.xml
+
+	logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Virtual Machine $VM_ID."
+	onevm delete $VM_ID
+	delete_template_and_images $TEMPLATE_ID
 done
 
-#Run internal tests
-logging "[$TEMPLATE_ID] INFO: Starting internal tests..."
-for filename in internal_tests/*/
-do
- (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $REPORT_PATH)
-done
 
-echo "</SECANT>" >> $REPORT_PATH
 
-# Remove white lines from file
-sed '/^$/d' $REPORT_PATH > $REPORT_PATH.xml
-rm $REPORT_PATH
-
-# Create file to save the assessment result
-RESULT_PATH="$reports_directory/result_$TEMPLATE_ID"
-if [[ -e $RESULT_PATH.xml ]] ; then
-    i=2
-    while [[ -e $RESULT_PATH-$i.xml ]] ; do
-        let i++
-    done
-    RESULT_PATH=$RESULT_PATH-$i
-fi
-echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $RESULT_PATH.xml
-python lib/assessment.py $TEMPLATE_ID $REPORT_PATH.xml >> $RESULT_PATH.xml
-
-logging "[$TEMPLATE_ID] INFO: Delete Virtual Machine $VM_ID."
-onevm delete $VM_ID
-#delete_template_and_images $TEMPLATE_ID
-rm $TEMP_FILE_PATH

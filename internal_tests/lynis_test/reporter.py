@@ -1,8 +1,11 @@
-import re
-import sys
+import re, sys
 import fileinput
 from lxml import etree
+sys.path.append('../../include/')
+import py_functions
 
+py_functions.setLogging()
+logging.info('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
 lynis =  etree.Element('LYNIS_TEST')
 
 lynis_data = sys.stdin.readlines()

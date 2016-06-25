@@ -1,4 +1,4 @@
-import re
+import re, sys
 from lxml import etree
 import ConfigParser
 
@@ -9,7 +9,12 @@ def evaluateReport(report_file):
     alerts = []
     report = etree.parse(report_file)
     find_text = etree.XPath("/SECANT/SSH_AUTH_TEST/text()")
-    ssh_test_result =  find_text(report)[0]
+
+    try:
+        ssh_test_result =  find_text(report)[0]
+    except (ValueError,IndexError):
+        return alerts
+
     regex = re.search('is\sallowed', ssh_test_result)
     if regex:
         alerts.append(ssh_test_result)

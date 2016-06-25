@@ -1,7 +1,11 @@
-import re
-import sys
+import re, sys
 import fileinput
 from lxml import etree
+sys.path.append('../../include/')
+import py_functions
+
+py_functions.setLogging()
+logging.info('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
 
 pakiti =  etree.Element('PAKITI_TEST')
 

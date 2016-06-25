@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-source conf/secant.conf
+# $1 : secant conf file path
+
+DEFAULT_SECANT_CONF_PATH=../../conf/secant.conf
+SECANT_CONF_PATH=${1-$DEFAULT_SECANT_CONF_PATH}
+source "$SECANT_CONF_PATH"
 
 logging() {
     echo `date +"%Y-%d-%m %H:%M:%S"` "$*";
