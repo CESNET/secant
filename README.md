@@ -11,7 +11,7 @@ The assessment process consists of performing a set of steps.
 
 1. Create virtual machine from image and run it in isolated environment (without internet connection).
 
-2. Run external tests. These is tests which do not need access to the system. For example port scanning.
+2. Run external tests. These are tests which do not need access to the system. For example port scanning.
 
 3. Run internal tests. For this type of tests SSH connection is needed because they run on the virtual machine itself. As a consequence they are not run on Windows images.
 
