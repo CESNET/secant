@@ -1,8 +1,12 @@
 from lxml import etree
-import ConfigParser
+import ConfigParser, os
 
 settings = ConfigParser.ConfigParser()
-settings.read('conf/assessment.conf')
+
+if os.path.split(os.getcwd())[-1] == 'lib':
+    settings.read('../conf/assessment.conf')
+else:
+    settings.read('conf/assessment.conf')
 
 def evaluateReport(report_file):
     alerts = []
@@ -11,5 +15,5 @@ def evaluateReport(report_file):
     for port in ports:
         find_text = etree.XPath( "/SECANT/NMAP_TEST/ports/port[contains(@portid, " + port + ")]")
         if find_text(report):
-            alerts.append("Port is " + port + " open")
+            alerts.append("Port " + port + " is open")
     return alerts

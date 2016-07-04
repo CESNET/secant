@@ -6,21 +6,34 @@ import ConfigParser
 import os
 import importlib
 import logging
-sys.path.append('include')
+
+external_tests_path=""
+internal_tests_path=""
+if os.path.split(os.getcwd())[-1] == 'lib':
+    sys.path.append('../include')
+    external_tests_path="../external_tests"
+    internal_tests_path="../internal_tests"
+else:
+    sys.path.append('include')
+    external_tests_path="external_tests"
+    internal_tests_path="internal_tests"
+
 import py_functions
 
 py_functions.setLogging()
 
 def assessment(template_id, report_file):
     alerts = []
-    for dir_name in os.listdir('external_tests'):
-            path = "external_tests/" + dir_name
+    for dir_name in os.listdir(external_tests_path):
+            path = external_tests_path + "/" + dir_name
+            print path
             sys.path.append(path)
             mod = importlib.import_module(dir_name)
             alerts = alerts + mod.evaluateReport(report_file)
 
-    for dir_name in os.listdir('internal_tests'):
-            path = "internal_tests/" + dir_name
+    for dir_name in os.listdir(internal_tests_path):
+            path = internal_tests_path + "/" + dir_name
+            print path
             sys.path.append(path)
             mod = importlib.import_module(dir_name)
             alerts = alerts + mod.evaluateReport(report_file)

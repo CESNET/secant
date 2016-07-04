@@ -1,9 +1,13 @@
 import re
 from lxml import etree
-import ConfigParser
+import ConfigParser, os
 
 settings = ConfigParser.ConfigParser()
-settings.read('conf/assessment.conf')
+
+if os.path.split(os.getcwd())[-1] == 'lib':
+    settings.read('../conf/assessment.conf')
+else:
+    settings.read('conf/assessment.conf')
 
 def evaluateReport(report_file):
     alerts = []

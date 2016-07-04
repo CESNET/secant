@@ -4,13 +4,15 @@
 # $3 : functions.sh path
 
 IP=$1
-TEMPLATE_IDENTIFIER=$2
+VM_ID=$2
+TEMPLATE_IDENTIFIER=$3
 DEFAULT_FUNCTIONS_FILE_PATH=../../include/functions.sh
-FUNCTIONS_FILE_PATH=${3-$DEFAULT_FUNCTIONS_FILE_PATH}
+FUNCTIONS_FILE_PATH=${5-$DEFAULT_FUNCTIONS_FILE_PATH}
 source "$FUNCTIONS_FILE_PATH" ../../conf/secant.conf
+FOLDER_PATH=$4
 
-if ! nmap -oX - $IP | python reporter.py 2> /tmp/stderr.txt; then
-  EXCEPTION=$(cat /tmp/stderr.txt | egrep 'IOError:')
-  logging "[$TEMPLATE_IDENTIFIER] ERROR: $EXCEPTION"
-  rm /tmp/stderr.txt
+if ! nmap -oX - $IP > $FOLDER_PATH/nmap_output.xml; then
+  logging "ERROR during Nmap command appeared!"
 fi
+
+cat $FOLDER_PATH/nmap_output.xml | python reporter.py $TEMPLATE_IDENTIFIER

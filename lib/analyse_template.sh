@@ -3,28 +3,33 @@
 TEMPLATE_ID=$1
 TEMPLATE_IDENTIFIER=$2
 
-DEFAULT_SECANT_CONF_PATH=../conf/secant.conf
-SECANT_CONF_PATH=${3-$DEFAULT_SECANT_CONF_PATH}
-source "$SECANT_CONF_PATH"
-
-DEFAULT_FUNCTIONS_FILE_PATH=../include/functions.sh
-FUNCTIONS_FILE_PATH=${4-$DEFAULT_FUNCTIONS_FILE_PATH}
-source "$FUNCTIONS_FILE_PATH" ../conf/secant.conf
-
-# Create folder to save the assessment result
-FOLDER_PATH=$reports_directory/$TEMPLATE_IDENTIFIER
+#DEFAULT_SECANT_CONF_PATH=../conf/secant.conf
+#SECANT_CONF_PATH=${3-$DEFAULT_SECANT_CONF_PATH}
+#source "$SECANT_CONF_PATH"
+#
+#DEFAULT_FUNCTIONS_FILE_PATH=../include/functions.sh
+#FUNCTIONS_FILE_PATH=${4-$DEFAULT_FUNCTIONS_FILE_PATH}
+#source "$FUNCTIONS_FILE_PATH" ../conf/secant.conf
 
 # Check from which folder script is running
 CURRENT_DIRECTORY=${PWD##*/}
 EXTERNAL_TESTS_FOLDER_PATH=
 INTERNAL_TESTS_FOLDER_PATH=
-if [[ CURRENT_DIRECTORY=${PWD##*/} -eq 'lib' ]] ; then
+
+if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
 	EXTERNAL_TESTS_FOLDER_PATH=../external_tests
-	INTERNAL_TESTS_FOLDER_PATH=../external_tests
+	INTERNAL_TESTS_FOLDER_PATH=../internal_tests
+	source ../conf/secant.conf
+	source ../include/functions.sh
 else
 	EXTERNAL_TESTS_FOLDER_PATH=external_tests
-	INTERNAL_TESTS_FOLDER_PATH=external_tests
+	INTERNAL_TESTS_FOLDER_PATH=internal_tests
+	source conf/secant.conf
+	source include/functions.sh
 fi
+
+# Create folder to save the assessment result
+FOLDER_PATH=$reports_directory/$TEMPLATE_IDENTIFIER
 
 if [[ ! -d $FOLDER_PATH ]] ; then
 	i=2
@@ -91,7 +96,7 @@ do
 	done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
 
 	# Wait 25 seconds befor first test
-	sleep 25
+	sleep 80
 
 	# Send sigstop to cloud-init
 	# No need for this step if context script does not contain reboot command
@@ -112,9 +117,9 @@ do
 
 	#Run external tests
 	logging "[$TEMPLATE_IDENTIFIER] INFO: Starting external tests..."
-	for filename in EXTERNAL_TESTS_FOLDER_PATH/*/
+	for filename in $EXTERNAL_TESTS_FOLDER_PATH/*/
 	do
-	 (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER >> $FOLDER_PATH/report)
+	 (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_PATH >> $FOLDER_PATH/report)
 	done
 
 	number_of_attempts=0
@@ -144,9 +149,9 @@ do
 		#exit 1
 	else
 		logging "[$TEMPLATE_IDENTIFIER] INFO: Starting internal tests..."
-		for filename in INTERNAL_TESTS_FOLDER_PATH/*/
+		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
 		do
-		 (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID >> $FOLDER_PATH/report)
+			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_PATH >> $FOLDER_PATH/report)
 		done
 	fi
 
@@ -157,11 +162,20 @@ do
 	rm -f $FOLDER_PATH/report
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/assessment_result.xml
-	python lib/assessment.py $TEMPLATE_ID $FOLDER_PATH/report.xml >> $FOLDER_PATH/assessment_result.xml
+	if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
+		python assessment.py $TEMPLATE_ID $FOLDER_PATH/report.xml >> $FOLDER_PATH/assessment_result.xml
+	else
+		python lib/assessment.py $TEMPLATE_ID $FOLDER_PATH/report.xml >> $FOLDER_PATH/assessment_result.xml
+	fi
+
 
 	logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Virtual Machine $VM_ID."
-	onevm delete $VM_ID
-	delete_template_and_images $TEMPLATE_ID
+	#onevm delete $VM_ID
+	onevm shutdown --hard $VM_ID
+
+#	if $RUN_WITH_CONTEXT_SCRIPT; then
+#		delete_template_and_images $TEMPLATE_ID
+#	fi
 done
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 source conf/secant.conf
-(cd include && source functions.sh && cd ..)
+source include/functions.sh
 
 declare -A temp_id_with_pid
 
@@ -15,7 +15,7 @@ waitall() {
       elif wait "$pid"; then
         logging "[${temp_id_with_pid[${pid}]}] INFO: Analysis completed."
       else
-        logging "[${temp_id_with_pid[${pid}]}] ERROR:CD .. Analysis failed."
+        logging "[${temp_id_with_pid[${pid}]}] ERROR: Analysis failed."
         ((++errors))
       fi
     done
@@ -25,12 +25,13 @@ waitall() {
  }
 
 print_ascii_art
-logging "[SECANT] DEBUG: Start Secant."
+echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Start Secant."
+echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Debug information: $log_file."
 
 export ONE_XMLRPC=$ONE_XMLRPC
 oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '10,10p')) # Get first 5 templates ids
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '13,13p')) # Get first 5 templates ids
 #TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
 
 query='//NIFTY_ID' # attribute which determines that template should be analyzed

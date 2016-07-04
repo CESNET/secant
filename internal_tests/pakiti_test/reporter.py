@@ -1,6 +1,15 @@
-import re, sys
-import fileinput
+import re, sys, os, fileinput, logging
 from lxml import etree
+
+template_id = sys.argv[1]
+# if os.path.split(os.getcwd())[-1] == 'lib':
+#     sys.path.append('../include/')
+# else:
+#     if os.path.split(os.getcwd())[-1] == 'secant':
+#         sys.path.append('include/')
+#
+# import py_functions
+
 sys.path.append('../../include/')
 import py_functions
 

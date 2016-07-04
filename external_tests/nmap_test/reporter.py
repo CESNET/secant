@@ -2,10 +2,12 @@ import re
 import fileinput
 import sys
 from lxml import etree
+import logging
 sys.path.append('../../include/')
 import py_functions
 
 
+template_id = sys.argv[1]
 try:
     py_functions.setLogging()
 except IOError as e:
