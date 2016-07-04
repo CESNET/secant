@@ -38,7 +38,7 @@ else:
         # arch.text = pkg_list[2]
 
     if pkg_count == 0:
-        pakiti.text = "No vulnerable packages are detected."
+        pakiti.text = "No vulnerable packages."
 
 print etree.tostring(pakiti,pretty_print=True)
 

@@ -58,12 +58,19 @@ delete_template_and_images(){
 	logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Template $TEMPLATE_ID."
 }
 
+FOLDER_TO_SAVE_REPORTS=
 for RUN_WITH_CONTEXT_SCRIPT in false true
 do
 	if ! $RUN_WITH_CONTEXT_SCRIPT; then
 		logging "[$TEMPLATE_IDENTIFIER] INFO: Start first run without contextualization script."
+		#Folder to save reports and logs during first run
+		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
+		mkdir -p $FOLDER_TO_SAVE_REPORTS
 	else
 		logging "[$TEMPLATE_IDENTIFIER] INFO: Start second run with contextualization script."
+		#Folder to save reports and logs during second run
+		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
+		mkdir -p $FOLDER_TO_SAVE_REPORTS
 	fi
 
 	VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
@@ -112,14 +119,14 @@ do
 	#	logging "[$TEMPLATE_IDENTIFIER] DEBUG: Process cloud-init still running."
 	#fi
 
-	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/report
-	echo "<SECANT>" >> $FOLDER_PATH/report
+	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/report
+	echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
 
 	#Run external tests
 	logging "[$TEMPLATE_IDENTIFIER] INFO: Starting external tests..."
 	for filename in $EXTERNAL_TESTS_FOLDER_PATH/*/
 	do
-	 (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_PATH >> $FOLDER_PATH/report)
+	 (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
 	done
 
 	number_of_attempts=0
@@ -151,21 +158,21 @@ do
 		logging "[$TEMPLATE_IDENTIFIER] INFO: Starting internal tests..."
 		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
 		do
-			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_PATH >> $FOLDER_PATH/report)
+			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
 		done
 	fi
 
-	echo "</SECANT>" >> $FOLDER_PATH/report
+	echo "</SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
 
 	# Remove white lines from file
-	sed '/^$/d' $FOLDER_PATH/report > $FOLDER_PATH/report.xml
-	rm -f $FOLDER_PATH/report
+	sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
+	rm -f $FOLDER_TO_SAVE_REPORTS/report
 
-	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/assessment_result.xml
+	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-		python assessment.py $TEMPLATE_ID $FOLDER_PATH/report.xml >> $FOLDER_PATH/assessment_result.xml
+		python assessment.py $TEMPLATE_ID $FOLDER_TO_SAVE_REPORTS/report.xml >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	else
-		python lib/assessment.py $TEMPLATE_ID $FOLDER_PATH/report.xml >> $FOLDER_PATH/assessment_result.xml
+		python lib/assessment.py $TEMPLATE_ID $FOLDER_TO_SAVE_REPORTS/report.xml >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	fi
 
 
