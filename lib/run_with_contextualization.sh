@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! "$#" -eq 2 ] ; then
-  echo "2 argument required, $# provided!"
+if [ ! "$#" -eq 3 ] ; then
+  echo "3 argument required, $# provided!"
   exit 1
 fi
 
@@ -22,22 +22,22 @@ else
 fi
 
 TEMPLATE_ID=$1
-REPORT_FOLDER=$2
+TEMPLATE_IDENTIFIER=$2
+REPORT_FOLDER=$3
 USER_DATA_FILE=$REPORT_FOLDER/user_data.yaml
-NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID/text()" -n)
-CONTEXT_FILE=$REPORT_FOLDER/ctx."$NIFTY_ID".txt
+CONTEXT_FILE=$REPORT_FOLDER/ctx."$TEMPLATE_IDENTIFIER".txt
 #MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_AD_MPURI/text()" -n)
 MPURI="https://appdb.egi.eu/store/vm/image/5429adc6-61bc-413d-b465-e8f655617ad4:5764/" # For test purposes
-wget "$MPURI"xml -O $REPORT_FOLDER/"$NIFTY_ID".xml > /dev/null 2>&1
-CONTEXT_SCRIPT_URL=$(xmlstarlet sel -t  -v "//virtualization:contextscript/url" -n $REPORT_FOLDER/"$NIFTY_ID".xml)
+wget "$MPURI"xml -O $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml > /dev/null 2>&1
+CONTEXT_SCRIPT_URL=$(xmlstarlet sel -t  -v "//virtualization:contextscript/url" -n $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml)
 wget $CONTEXT_SCRIPT_URL -O $USER_DATA_FILE > /dev/null 2>&1
 if [[ -z "$CONTEXT_SCRIPT_URL" ]]; then
-  logging "[$NIFTY_ID] ERROR: Could not obtain url of context script."
+  logging $TEMPLATE_IDENTIFIER "Could not obtain url of context script." "ERROR"
   exit 1
 fi
 
 if [ ! -f "$USER_DATA_FILE" ] ; then
-  logging "[$TEMPLATE_IDENTIFIER] ERROR: File $USER_DATA_FILE not found."
+  logging $TEMPLATE_IDENTIFIER "File $USER_DATA_FILE not found." "ERROR"
   exit 1
 fi
 

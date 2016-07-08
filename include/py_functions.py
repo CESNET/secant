@@ -1,6 +1,6 @@
 import ConfigParser
 import logging
-import errno,sys,os
+import errno,sys,os,re, mmap
 
 class FakeSecHead(object):
     def __init__(self, fp):
@@ -26,10 +26,26 @@ def getSettingsFromBashConfFile(config_file, key):
 
 def setLogging():
     if os.path.split(os.getcwd())[-1] == 'lib':
-        logging.basicConfig(format='%(asctime)s %(message)s', filename=getSettingsFromBashConfFile('../conf/secant.conf', 'log_file'),level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+        secant_conf_path = '../conf/secant.conf'
     else:
         if os.path.split(os.getcwd())[-1] == 'secant':
-            logging.basicConfig(format='%(asctime)s %(message)s', filename=getSettingsFromBashConfFile('conf/secant.conf', 'log_file'),level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+            secant_conf_path = 'conf/secant.conf'
         else:
-            logging.basicConfig(format='%(asctime)s %(message)s', filename=getSettingsFromBashConfFile('../../conf/secant.conf', 'log_file'),level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+            secant_conf_path = '../../conf/secant.conf'
+
+    debug = ""
+    with open(secant_conf_path, 'r+') as f:
+        data = mmap.mmap(f.fileno(), 0)
+        mo = re.search(r'(DEBUG)=((true\b)|(false\b))', data)
+        if mo:
+            debug = mo.group(2)
+
+    log_level = logging.DEBUG
+
+    if debug == "false":
+        log_level = logging.INFO
+
+    logging.basicConfig(format='%(asctime)s %(message)s', filename=getSettingsFromBashConfFile(secant_conf_path, 'log_file'),level=log_level, datefmt='%Y-%m-%d %H:%M:%S')
+
+
 

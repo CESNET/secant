@@ -21,11 +21,13 @@ if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
 	INTERNAL_TESTS_FOLDER_PATH=../internal_tests
 	source ../conf/secant.conf
 	source ../include/functions.sh
+	RUN_WITH_CONTEXT_SCRIPT_PATH=run_with_contextualization.sh
 else
 	EXTERNAL_TESTS_FOLDER_PATH=external_tests
 	INTERNAL_TESTS_FOLDER_PATH=internal_tests
 	source conf/secant.conf
 	source include/functions.sh
+	RUN_WITH_CONTEXT_SCRIPT_PATH=lib/run_with_contextualization.sh
 fi
 
 # Create folder to save the assessment result
@@ -51,34 +53,38 @@ delete_template_and_images(){
 	for image_name in "${images[@]}"
 	do
 		oneimage delete $image_name
-		logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Image $image_name."
+		logging $TEMPLATE_IDENTIFIER "Delete Image $image_name." "DEBUG"
 	done
 
 	onetemplate delete $TEMPLATE_ID
-	logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Template $TEMPLATE_ID."
+	logging $TEMPLATE_IDENTIFIER "Delete Template $TEMPLATE_ID." "DEBUG"
 }
 
 FOLDER_TO_SAVE_REPORTS=
 for RUN_WITH_CONTEXT_SCRIPT in false true
 do
 	if ! $RUN_WITH_CONTEXT_SCRIPT; then
-		logging "[$TEMPLATE_IDENTIFIER] INFO: Start first run without contextualization script."
+		logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
 		#Folder to save reports and logs during first run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
 	else
-		logging "[$TEMPLATE_IDENTIFIER] INFO: Start second run with contextualization script."
+		logging $TEMPLATE_IDENTIFIER "Start second run with contextualization script." "DEBUG"
 		#Folder to save reports and logs during second run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
+		if [ ! ./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS ]; then
+			logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "DEBUG"
+			continue
+		fi
 	fi
 
 	VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
 	if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
 	  VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
-	  logging "[$TEMPLATE_IDENTIFIER] INFO: Template successfully instantiated."
+	  logging $TEMPLATE_IDENTIFIER "Template successfully instantiated." "DEBUG"
 	else
-	  logging "[$TEMPLATE_IDENTIFIER] ERROR: $VM_ID."
+	  logging $TEMPLATE_IDENTIFIER "$VM_ID." "ERROR"
 	  exit 1
 	fi
 
@@ -92,7 +98,7 @@ do
 		lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
 	done
 
-	logging "[$TEMPLATE_IDENTIFIER] INFO: Virtual Machine $vm_name is now running."
+	logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
 
 
 	# Get IPs
@@ -123,7 +129,7 @@ do
 	echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
 
 	#Run external tests
-	logging "[$TEMPLATE_IDENTIFIER] INFO: Starting external tests..."
+	logging $TEMPLATE_IDENTIFIER "Starting external tests..." "DEBUG"
 	for filename in $EXTERNAL_TESTS_FOLDER_PATH/*/
 	do
 	 (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
@@ -137,7 +143,7 @@ do
 		do
 			ssh_state=$(nmap $ip -PN -p ssh | egrep -o 'open|closed|filtered')
 			if [ "$ssh_state" == "open" ]; then
-				logging "[$TEMPLATE_IDENTIFIER] INFO: Open SSH port has been successfully detected, IP address: $ip"
+				logging $TEMPLATE_IDENTIFIER "Open SSH port has been successfully detected, IP address: $ip" "DEBUG"
 				ip_address_for_ssh=$ip
 				break;
 			fi
@@ -151,11 +157,11 @@ do
 
 	#Run internal tests
 	if [ -z "$ip_address_for_ssh" ]; then
-		logging "[$TEMPLATE_IDENTIFIER] ERROR: Open SSH port has not been detected."
+		logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected." "ERROR"
 		onevm delete $VM_ID
 		#exit 1
 	else
-		logging "[$TEMPLATE_IDENTIFIER] INFO: Starting internal tests..."
+		logging $TEMPLATE_IDENTIFIER "Starting internal tests..." "DEBUG"
 		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
 		do
 			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
@@ -170,13 +176,13 @@ do
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-		python assessment.py $TEMPLATE_ID $FOLDER_TO_SAVE_REPORTS/report.xml >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+		python assessment.py $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS/report.xml >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	else
-		python lib/assessment.py $TEMPLATE_ID $FOLDER_TO_SAVE_REPORTS/report.xml >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+		python lib/assessment.py $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS/report.xml >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	fi
 
 
-	logging "[$TEMPLATE_IDENTIFIER] INFO: Delete Virtual Machine $VM_ID."
+	logging $TEMPLATE_IDENTIFIER "Delete Virtual Machine $VM_ID." "DEBUG"
 	#onevm delete $VM_ID
 	onevm shutdown --hard $VM_ID
 

@@ -15,7 +15,7 @@ import py_functions
 
 template_id = sys.argv[1]
 py_functions.setLogging()
-logging.info('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
+logging.debug('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
 lynis =  etree.Element('LYNIS_TEST')
 
 lynis_data = sys.stdin.readlines()

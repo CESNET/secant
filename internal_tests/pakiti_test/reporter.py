@@ -14,7 +14,7 @@ sys.path.append('../../include/')
 import py_functions
 
 py_functions.setLogging()
-logging.info('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
+logging.debug('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
 
 pakiti =  etree.Element('PAKITI_TEST')
 

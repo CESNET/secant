@@ -14,7 +14,7 @@ except IOError as e:
     raise
     sys.exit(1)
 
-logging.info('[%s] %s: Start NMAP_TEST reporter.', template_id, 'DEBUG')
+logging.debug('[%s] %s: Start NMAP_TEST reporter.', template_id, 'DEBUG')
 
 ssh_auth_test =  etree.Element('NMAP_TEST')
 tree = etree.parse(sys.stdin)

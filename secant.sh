@@ -13,9 +13,9 @@ waitall() {
       if kill -0 "$pid" 2>/dev/null; then
         set -- "$@" "$pid"
       elif wait "$pid"; then
-        logging "[${temp_id_with_pid[${pid}]}] INFO: Analysis completed."
+        logging ${temp_id_with_pid[${pid}]} "Analysis completed." "INFO"
       else
-        logging "[${temp_id_with_pid[${pid}]}] ERROR: Analysis failed."
+        logging ${temp_id_with_pid[${pid}]} "Analysis failed." "ERROR"
         ((++errors))
       fi
     done
@@ -31,22 +31,22 @@ echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Debug information: $log_file."
 export ONE_XMLRPC=$ONE_XMLRPC
 oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '13,13p')) # Get first 5 templates ids
-#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
+#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '13,13p')) # Get first 5 templates ids
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
 
 query='//NIFTY_ID' # attribute which determines that template should be analyzed
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
-    #NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
-    #if [ -n "$NIFTY_ID" ]; then # n - for not empty
+    NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
+    if [ -n "$NIFTY_ID" ]; then # n - for not empty
         TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
-    #fi
+    fi
 done
 
-#TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID")
-TEMPLATE_IDENTIFIER=$TEMPLATE_ID
+TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID")
+#TEMPLATE_IDENTIFIER=$TEMPLATE_ID
 if [ ${#TEMPLATES_FOR_ANALYSIS[@]} -eq 0 ]; then
-    logging "[SECANT] DEBUG: No templates for analysis."
+    logging "SECANT" "No templates for analysis." "INFO"
 else
     for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"
     do
@@ -60,7 +60,7 @@ else
             ./lib/analyse_template.sh $TEMPLATE_ID $TEMPLATE_IDENTIFIER &
             template_pid=$!
             pids="$pids $template_pid"
-            temp_id_with_pid+=( [$template_pid]=$TEMPLATE_ID)
+            temp_id_with_pid+=( [$template_pid]=$TEMPLATE_IDENTIFIER)
         fi
     done
 fi

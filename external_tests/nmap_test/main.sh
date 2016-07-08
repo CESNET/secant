@@ -12,7 +12,7 @@ source "$FUNCTIONS_FILE_PATH" ../../conf/secant.conf
 FOLDER_PATH=$4
 
 if ! nmap -oX - $IP > $FOLDER_PATH/nmap_output.xml; then
-  logging "ERROR during Nmap command appeared!"
+  logging $TEMPLATE_IDENTIFIER "During Nmap command appeared!" "ERROR"
 fi
 
 cat $FOLDER_PATH/nmap_output.xml | python reporter.py $TEMPLATE_IDENTIFIER

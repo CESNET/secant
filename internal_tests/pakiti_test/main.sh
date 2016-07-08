@@ -28,7 +28,7 @@ if [ "$?" -eq "0" ];
 then
     cat $FOLDER_PATH/pakiti_test-result.txt | python reporter.py $TEMPLATE_IDENTIFIER
 else
-    logging "[$TEMPLATE_IDENTIFIER] ERROR: occured while sending data to the Pakiti server!"
+    logging $TEMPLATE_IDENTIFIER "Occured while sending data to the Pakiti server!" "ERROR"
 fi
 #| python reporter.py $TEMPLATE_IDENTIFIER
 
