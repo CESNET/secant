@@ -73,7 +73,7 @@ do
 		#Folder to save reports and logs during second run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
-		if [ ! ./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS ]; then
+		if [ ! ./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS]; then
 			logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "DEBUG"
 			continue
 		fi
@@ -111,19 +111,12 @@ do
 	# Wait 25 seconds befor first test
 	sleep 80
 
-	# Send sigstop to cloud-init
-	# No need for this step if context script does not contain reboot command
-	#logging "[$TEMPLATE_IDENTIFIER] DEBUG: Send SIGSTOP to cloud-init."
-	#ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'kill -SIGSTOP `pgrep cloud-init`'
-	#
-	#CLOUD_INIT_PROCESS_STATUS=$(ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$ip_address_for_ssh 'ps cax | grep cloud-init')
-	#CLOUD_INIT_PROCESS_STATUS=$(echo $CLOUD_INIT_PROCESS_STATUS | awk '{print $3}')
-	#
-	#if [ "$CLOUD_INIT_PROCESS_STATUS" == "T" ]; then
-	#	logging "[$TEMPLATE_IDENTIFIER] DEBUG: Process cloud-init successfully stopped."
-	#	else
-	#	logging "[$TEMPLATE_IDENTIFIER] DEBUG: Process cloud-init still running."
-	#fi
+	EXIT_STATUS=$(cat check_if_cloud_init_run_finished.py | ssh root@${ipAddresses[0]} python -)
+	while [ $EXIT_STATUS -eq 1 ]
+	do
+		sleep 10
+		EXIT_STATUS=$(cat check_if_cloud_init_run_finished.py | ssh root@${ipAddresses[0]} python -)
+	done
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/report
 	echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report

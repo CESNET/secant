@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! "$#" -eq 3 ] ; then
-  echo "3 argument required, $# provided!"
+if [ ! "$#" -eq 4 ] ; then
+  echo "4 argument required, $# provided!"
   exit 1
 fi
 

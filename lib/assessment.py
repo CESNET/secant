@@ -50,7 +50,7 @@ def assessment(template_id, report_file):
         details.text = delails_string
     else:
         result.text = "OK"
-    logging.debug('[%s] %s: Assessment completed', template_id, 'INFO')
+    logging.debug('[%s] %s: Assessment completed', template_id, 'DEBUG')
     print etree.tostring(secant,pretty_print=True)
 
 if __name__ == "__main__":
