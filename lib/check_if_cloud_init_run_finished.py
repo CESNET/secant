@@ -1,4 +1,4 @@
-import os, json
+import os, json, sys
 import logging
 
 external_tests_path=""

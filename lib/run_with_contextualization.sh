@@ -1,15 +1,5 @@
 #!/bin/bash
 
-if [ ! "$#" -eq 4 ] ; then
-  echo "4 argument required, $# provided!"
-  exit 1
-fi
-
-if  [ ! -d  $2 ]  ; then
-  echo "Directory $dir does not exist!"
-  exit 1
-fi
-
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
     source ../include/functions.sh
@@ -21,11 +11,22 @@ else
     fi
 fi
 
+if [ ! "$#" -eq 4 ] ; then
+  logging $TEMPLATE_IDENTIFIER "4 argument required, $# provided!" "ERROR"
+  exit 1
+fi
+
 TEMPLATE_ID=$1
 TEMPLATE_IDENTIFIER=$2
 REPORT_FOLDER=$3
 USER_DATA_FILE=$REPORT_FOLDER/user_data.yaml
 CONTEXT_FILE=$REPORT_FOLDER/ctx."$TEMPLATE_IDENTIFIER".txt
+
+if  [ ! -d  $3 ]  ; then
+  logging $TEMPLATE_IDENTIFIER "Directory $3 does not exist!" "ERROR"
+  exit 1
+fi
+
 #MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_AD_MPURI/text()" -n)
 MPURI="https://appdb.egi.eu/store/vm/image/5429adc6-61bc-413d-b465-e8f655617ad4:5764/" # For test purposes
 wget "$MPURI"xml -O $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml > /dev/null 2>&1
@@ -62,3 +63,4 @@ cat >>$CONTEXT_FILE <<EOF
 ]
 EOF
 onetemplate instantiate -v $TEMPLATE_ID $CONTEXT_FILE
+exit 0

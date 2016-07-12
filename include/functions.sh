@@ -19,15 +19,15 @@ fi
 
 
 logging() {
-    if [ $3 == "INFO" ]; then
+    if [[ $3 == "INFO" ]]; then
         echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] INFO: $2" >> $log_file;
     fi
 
-    if [ $3 == "ERROR" ]; then
+    if [[ $3 == "ERROR" ]]; then
         echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ERROR: $2" >> $log_file;
     fi
 
-    if [ $3 == "DEBUG" ] && [ $DEBUG = true ]; then
+    if [[ $3 == "DEBUG" ]] && [ $DEBUG = true ]; then
         echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] DEBUG: $2" >> $log_file;
     fi
 }

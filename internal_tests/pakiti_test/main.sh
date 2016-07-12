@@ -30,21 +30,3 @@ then
 else
     logging $TEMPLATE_IDENTIFIER "Occured while sending data to the Pakiti server!" "ERROR"
 fi
-#| python reporter.py $TEMPLATE_IDENTIFIER
-
-#if [[ `cat $PAKITI_REPORT | head -c 2` == "OK" ]];then
-#    sed -i -e "1d" $PAKITI_REPORT #Remove OK
-#    if [[ `head -n 1 $PAKITI_REPORT` == '' ]];then
-#    	echo "No vulnerable packages are detected."
-#    else
-#        echo "Name, Installed version, Architecture"
-#        while IFS='' read -r line || [[ -n "$line" ]]; do
-#            echo $line | sed 's/ /,/g'
-#        done < $PAKITI_REPORT
-#    fi
-#else
-#  echo "Pakiti error appears during data processing."
-#fi
-#
-#rm -f $PAKITI_REPORT
-#rm -f /tmp/tmp_$VM_ID

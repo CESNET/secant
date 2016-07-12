@@ -22,12 +22,15 @@ if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
 	source ../conf/secant.conf
 	source ../include/functions.sh
 	RUN_WITH_CONTEXT_SCRIPT_PATH=run_with_contextualization.sh
+	CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=check_if_cloud_init_run_finished.py
+
 else
 	EXTERNAL_TESTS_FOLDER_PATH=external_tests
 	INTERNAL_TESTS_FOLDER_PATH=internal_tests
 	source conf/secant.conf
 	source include/functions.sh
 	RUN_WITH_CONTEXT_SCRIPT_PATH=lib/run_with_contextualization.sh
+	CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=lib/check_if_cloud_init_run_finished.py
 fi
 
 # Create folder to save the assessment result
@@ -73,8 +76,9 @@ do
 		#Folder to save reports and logs during second run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
-		if [ ! ./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS]; then
-			logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "DEBUG"
+		./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS
+		if [ $? -eq 1 ]; then
+			logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "ERROR"
 			continue
 		fi
 	fi
@@ -108,15 +112,19 @@ do
 	  ipAddresses+=( "$entry" )
 	done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
 
-	# Wait 25 seconds befor first test
+	# Wait 80 seconds befor first test
 	sleep 80
 
-	EXIT_STATUS=$(cat check_if_cloud_init_run_finished.py | ssh root@${ipAddresses[0]} python -)
-	while [ $EXIT_STATUS -eq 1 ]
-	do
-		sleep 10
-		EXIT_STATUS=$(cat check_if_cloud_init_run_finished.py | ssh root@${ipAddresses[0]} python -)
-	done
+	if $RUN_WITH_CONTEXT_SCRIPT;
+	then
+		# Wait for contextualization
+		RESULTS=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python -)
+		while [ $? -eq 1 ]
+		do
+			sleep 10
+			RESULTS=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python -)
+		done
+	fi
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/report
 	echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report

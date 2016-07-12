@@ -58,6 +58,7 @@ else
             fi
 
             ./lib/analyse_template.sh $TEMPLATE_ID $TEMPLATE_IDENTIFIER &
+            logging $TEMPLATE_IDENTIFIER "Analysis started." "INFO"
             template_pid=$!
             pids="$pids $template_pid"
             temp_id_with_pid+=( [$template_pid]=$TEMPLATE_IDENTIFIER)

@@ -20,13 +20,16 @@ fi
 
 scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -r $lynis_directory/lynis/ root@$VM_IP:/tmp > /tmp/scp.log 2>&1
 
-
 if [ "$?" -eq "0" ];
 then
     if ! ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
         logging $TEMPLATE_IDENTIFIER] "During Lynis testing!" "ERROR"
     fi
     cat $FOLDER_PATH/lynis_test.txt | python reporter.py $TEMPLATE_IDENTIFIER
+    if [ "$?" -eq "1" ];
+    then
+        logging $TEMPLATE_IDENTIFIER "Lynis test failed!" "ERROR"
+    fi
 else
     logging $TEMPLATE_IDENTIFIER "Scp command failed!" "ERROR"
 fi
