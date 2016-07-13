@@ -76,8 +76,8 @@ do
 		#Folder to save reports and logs during second run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
-		./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS
-		if [ $? -eq 1 ]; then
+		EXIT_CODE=$(./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS)
+		if [[ "$EXIT_CODE" == "1" ]]; then
 			logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "ERROR"
 			continue
 		fi
@@ -118,12 +118,13 @@ do
 	if $RUN_WITH_CONTEXT_SCRIPT;
 	then
 		# Wait for contextualization
-		RESULTS=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python -)
-		while [ $? -eq 1 ]
+		RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python - 2>&1)
+		while [[ $RESULT == "1" ]]
 		do
 			sleep 10
-			RESULTS=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python -)
+			RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python - 2>&1)
 		done
+		logging $TEMPLATE_IDENTIFIER "$RESULT" "DEBUG"
 	fi
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/report
