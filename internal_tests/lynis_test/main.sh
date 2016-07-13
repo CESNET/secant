@@ -32,5 +32,7 @@ then
     fi
 else
     logging $TEMPLATE_IDENTIFIER "Scp command failed!" "ERROR"
+    logging $TEMPLATE_IDENTIFIER "Lynis test failed!" "ERROR"
+
 fi
 rm -f /tmp/scp.log

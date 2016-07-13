@@ -22,6 +22,21 @@ fi
 # Remotely run Pakiti client
 ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
 
+# Check if pakiti-pkg file is empty
+if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
+then
+        logging $TEMPLATE_IDENTIFIER "Pakiti report file is empty, try again!" "DEBUG"
+        sleep 10
+        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+fi
+
+if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
+then
+        logging $TEMPLATE_IDENTIFIER "Pakiti report file is empty!" "ERROR"
+        logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed!" "ERROR"
+        exit 1
+fi
+
 ./pakiti2-client-meta-proxy.sh < $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt 2>&1
 
 if [ "$?" -eq "0" ];

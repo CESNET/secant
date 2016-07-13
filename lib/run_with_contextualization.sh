@@ -11,8 +11,8 @@ else
     fi
 fi
 
-if [ ! "$#" -eq 4 ] ; then
-  logging $TEMPLATE_IDENTIFIER "4 argument required, $# provided!" "ERROR"
+if [ ! "$#" -eq 3 ] ; then
+  logging $TEMPLATE_IDENTIFIER "3 argument required, $# provided!" "ERROR"
   exit 1
 fi
 
