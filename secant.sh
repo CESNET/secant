@@ -5,6 +5,20 @@ source include/functions.sh
 
 declare -A temp_id_with_pid
 
+clean_if_analysis_failed() {
+    VM_IDS=($(onevm list | awk '{ print $1 }' | sed '1d'))
+    for VM_ID in "${VM_IDS[@]}"
+    do
+        query='//NIFTY_APPLIANCE_ID'
+        NIFTY_ID=$(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query")
+        if [ -n "$NIFTY_ID" ]; then # n - for not empty
+            if [[ $NIFTY_ID == $1 ]]; then
+                onevm shutdown $VM_ID --hard
+            fi
+        fi
+    done
+}
+
 waitall() {
   local errors=0
   while :; do
@@ -15,6 +29,7 @@ waitall() {
       elif wait "$pid"; then
         logging ${temp_id_with_pid[${pid}]} "Analysis completed." "INFO"
       else
+        clean_if_analysis_failed ${temp_id_with_pid[${pid}]}
         logging ${temp_id_with_pid[${pid}]} "Analysis failed." "ERROR"
         ((++errors))
       fi

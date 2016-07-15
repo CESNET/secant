@@ -23,12 +23,14 @@ fi
 ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
 
 # Check if pakiti-pkg file is empty
+for i in {1..5}; do
 if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
-then
-        logging $TEMPLATE_IDENTIFIER "Pakiti report file is empty, try again!" "DEBUG"
-        sleep 10
-        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
-fi
+    then
+            logging $TEMPLATE_IDENTIFIER "Pakiti report file is empty, try again!" "DEBUG"
+            sleep 10
+            ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    fi
+done
 
 if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
 then

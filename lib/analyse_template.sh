@@ -64,6 +64,7 @@ delete_template_and_images(){
 }
 
 FOLDER_TO_SAVE_REPORTS=
+VM_ID=
 for RUN_WITH_CONTEXT_SCRIPT in false true
 do
 	if ! $RUN_WITH_CONTEXT_SCRIPT; then
@@ -71,19 +72,21 @@ do
 		#Folder to save reports and logs during first run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
+		VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
 	else
 		logging $TEMPLATE_IDENTIFIER "Start second run with contextualization script." "DEBUG"
 		#Folder to save reports and logs during second run
 		FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
 		mkdir -p $FOLDER_TO_SAVE_REPORTS
-		EXIT_CODE=$(./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS)
-		if [[ "$EXIT_CODE" == "1" ]]; then
+		RETURN_MESSAGE=$(./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS)
+		if [[ "$RETURN_MESSAGE" == "1" ]]; then
 			logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "ERROR"
 			continue
 		fi
+		VM_ID=$RETURN_MESSAGE
 	fi
 
-	VM_ID=$(onetemplate instantiate $TEMPLATE_ID)
+
 	if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
 	  VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
 	  logging $TEMPLATE_IDENTIFIER "Template successfully instantiated." "DEBUG"

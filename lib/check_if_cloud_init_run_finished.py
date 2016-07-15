@@ -7,6 +7,6 @@ if os.path.exists(fin):
         if len(ret['v1']['errors']):
             sys.exit('Cloud-init finished with errors:' + "\n".join(ret['v1']['errors']))
         else:
-            sys.exit('Cloud-init finished finished with no errors.')
+            sys.exit('Cloud-init finished with no errors.')
 else:
     sys.exit(1)

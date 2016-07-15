@@ -62,5 +62,5 @@ cat >>$CONTEXT_FILE <<EOF
 "
 ]
 EOF
-onetemplate instantiate -v $TEMPLATE_ID $CONTEXT_FILE
-exit 0
+VM_ID=$(onetemplate instantiate -v $TEMPLATE_ID $CONTEXT_FILE | grep "VM ID:")
+echo $VM_ID
