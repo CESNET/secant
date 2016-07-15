@@ -37,6 +37,7 @@ then
         exit 1
 fi
 
+sed -i -e 's/host="[^"]\+"/host="'$TEMPLATE_IDENTIFIER'"/g' $FOLDER_PATH/pakiti_test-pkgs.txt
 ./pakiti2-client-meta-proxy.sh < $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt 2>&1
 
 if [ "$?" -eq "0" ];
