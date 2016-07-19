@@ -45,24 +45,6 @@ if [[ ! -d $FOLDER_PATH ]] ; then
     mkdir -p $FOLDER_PATH
 fi
 
-delete_template_and_images(){
-	# Get Template Images
-	query='//DISK/IMAGE/text()'
-	images=()
-	while IFS= read -r entry; do
-	  images+=( "$entry" )
-	done < <(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query" -n)
-
-	for image_name in "${images[@]}"
-	do
-		oneimage delete $image_name
-		logging $TEMPLATE_IDENTIFIER "Delete Image $image_name." "DEBUG"
-	done
-
-	onetemplate delete $TEMPLATE_ID
-	logging $TEMPLATE_IDENTIFIER "Delete Template $TEMPLATE_ID." "DEBUG"
-}
-
 FOLDER_TO_SAVE_REPORTS=
 VM_ID=
 for RUN_WITH_CONTEXT_SCRIPT in false true
@@ -89,7 +71,7 @@ do
 
 	if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
 	  VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
-	  logging $TEMPLATE_IDENTIFIER "Template successfully instantiated." "DEBUG"
+	  logging $TEMPLATE_IDENTIFIER "Template successfully instantiated, VM_ID: $VM_ID" "DEBUG"
 	else
 	  logging $TEMPLATE_IDENTIFIER "$VM_ID." "ERROR"
 	  exit 1
@@ -127,7 +109,7 @@ do
 			sleep 10
 			RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python - 2>&1)
 		done
-		logging $TEMPLATE_IDENTIFIER "$RESULT" "DEBUG"
+		#logging $TEMPLATE_IDENTIFIER "$RESULT" "DEBUG"
 	fi
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/report
@@ -141,6 +123,7 @@ do
 	done
 
 	number_of_attempts=0
+	ip_address_for_ssh=
 	while [ -z "$ip_address_for_ssh" ] && [ $number_of_attempts -lt 15 ]
 	do
 		ip_address_for_ssh=""
@@ -166,7 +149,7 @@ do
 		onevm delete $VM_ID
 		#exit 1
 	else
-		logging $TEMPLATE_IDENTIFIER "Starting internal tests..." "DEBUG"
+		logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh" "DEBUG"
 		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
 		do
 			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
@@ -191,9 +174,15 @@ do
 	#onevm delete $VM_ID
 	onevm shutdown --hard $VM_ID
 
-#	if $RUN_WITH_CONTEXT_SCRIPT; then
-#		delete_template_and_images $TEMPLATE_ID
-#	fi
+	# Wait VM to shutdown before delete image
+	if $RUN_WITH_CONTEXT_SCRIPT; then
+		VM_STATE=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
+		while [[ $VM_STATE -ne 0 ]]
+		do
+				sleep 5s
+				VM_STATE=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
+		done
+	fi
 done
 
 

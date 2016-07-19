@@ -19,6 +19,24 @@ clean_if_analysis_failed() {
     done
 }
 
+delete_template_and_images(){
+	# Get Template Images
+	query='//DISK/IMAGE/text()'
+	images=()
+	while IFS= read -r entry; do
+	  images+=( "$entry" )
+	done < <(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query" -n)
+
+	for image_name in "${images[@]}"
+	do
+		oneimage delete $image_name
+		logging $TEMPLATE_IDENTIFIER "Delete Image $image_name." "DEBUG"
+	done
+
+	onetemplate delete $TEMPLATE_ID
+	logging $TEMPLATE_IDENTIFIER "Delete Template $TEMPLATE_ID." "DEBUG"
+}
+
 waitall() {
   local errors=0
   while :; do
@@ -28,9 +46,11 @@ waitall() {
         set -- "$@" "$pid"
       elif wait "$pid"; then
         logging ${temp_id_with_pid[${pid}]} "Analysis completed." "INFO"
+        delete_template_and_images $TEMPLATE_ID
       else
         clean_if_analysis_failed ${temp_id_with_pid[${pid}]}
         logging ${temp_id_with_pid[${pid}]} "Analysis failed." "ERROR"
+        delete_template_and_images $TEMPLATE_ID
         ((++errors))
       fi
     done
