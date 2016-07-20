@@ -35,7 +35,6 @@ fi
 
 # Create folder to save the assessment result
 FOLDER_PATH=$reports_directory/$TEMPLATE_IDENTIFIER
-
 if [[ ! -d $FOLDER_PATH ]] ; then
 	i=2
 	while [[ -d $FOLDER_PATH-$i ]] ; do
@@ -47,7 +46,7 @@ fi
 
 FOLDER_TO_SAVE_REPORTS=
 VM_ID=
-for RUN_WITH_CONTEXT_SCRIPT in false true
+for RUN_WITH_CONTEXT_SCRIPT in true #false true
 do
 	if ! $RUN_WITH_CONTEXT_SCRIPT; then
 		logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
@@ -88,7 +87,6 @@ do
 	done
 
 	logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
-
 
 	# Get IPs
 	query='//NIC/IP/text()'

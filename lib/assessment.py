@@ -26,14 +26,12 @@ def assessment(template_id, report_file):
     alerts = []
     for dir_name in os.listdir(external_tests_path):
             path = external_tests_path + "/" + dir_name
-            print path
             sys.path.append(path)
             mod = importlib.import_module(dir_name)
             alerts = alerts + mod.evaluateReport(report_file)
 
     for dir_name in os.listdir(internal_tests_path):
             path = internal_tests_path + "/" + dir_name
-            print path
             sys.path.append(path)
             mod = importlib.import_module(dir_name)
             alerts = alerts + mod.evaluateReport(report_file)

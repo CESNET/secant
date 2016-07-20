@@ -16,11 +16,15 @@ except IOError as e:
 
 logging.debug('[%s] %s: Start NMAP_TEST reporter.', template_id, 'DEBUG')
 
-ssh_auth_test =  etree.Element('NMAP_TEST')
+nmap_test =  etree.Element('NMAP_TEST')
 tree = etree.parse(sys.stdin)
+if tree.findall(".//hosts[@down='1']"):
+    ports_element = etree.Element('ports')
+    ports_element.text = "Host seems down"
+    nmap_test.insert(0, ports_element)
+else:
+    ports = tree.findall(".//ports")
+    for port in ports:
+        nmap_test.insert(0, port)
 
-ports = tree.findall(".//ports")
-for port in ports:
-    ssh_auth_test.insert(0, port)
-
-print etree.tostring(ssh_auth_test,pretty_print=True)
+print etree.tostring(nmap_test,pretty_print=True)
