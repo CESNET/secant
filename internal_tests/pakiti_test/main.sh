@@ -4,7 +4,7 @@ VM_IP=$1
 VM_ID=$2 # VM ID in OpenNebul
 TEMPLATE_IDENTIFIER=$3
 FOLDER_PATH=$4
-SHOULD_SECANT_SKIP_THIS_TEST=$5
+SHOULD_SECANT_SKIP_THIS_TEST=${5-false}
 
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
@@ -33,21 +33,21 @@ else
     then
             printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
             logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed, due to empty report file." "ERROR"
-    fi
-
-    sed -i -e 's/host="[^"]\+"/host="'$TEMPLATE_IDENTIFIER'"/g' $FOLDER_PATH/pakiti_test-pkgs.txt
-    ./pakiti2-client-meta-proxy.sh < $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt 2>&1
-
-    if [ "$?" -eq "0" ];
-    then
-        cat $FOLDER_PATH/pakiti_test-result.txt | python reporter.py $TEMPLATE_IDENTIFIER
-        if [ "$?" -eq "1" ];
-        then
-            printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
-            logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed, error appeared in reporter." "ERROR"
-        fi
     else
-        printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
-        logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed while sending data to the Pakiti server!" "ERROR"
+        sed -i -e 's/host="[^"]\+"/host="'$TEMPLATE_IDENTIFIER'"/g' $FOLDER_PATH/pakiti_test-pkgs.txt
+        ./pakiti2-client-meta-proxy.sh < $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt 2>&1
+
+        if [ "$?" -eq "0" ];
+        then
+            cat $FOLDER_PATH/pakiti_test-result.txt | python reporter.py $TEMPLATE_IDENTIFIER
+            if [ "$?" -eq "1" ];
+            then
+                printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
+                logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed, error appeared in reporter." "ERROR"
+            fi
+        else
+            printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
+            logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed while sending data to the Pakiti server!" "ERROR"
+        fi
     fi
 fi

@@ -6,13 +6,36 @@
 IP=$1
 VM_ID=$2
 TEMPLATE_IDENTIFIER=$3
-DEFAULT_FUNCTIONS_FILE_PATH=../../include/functions.sh
-FUNCTIONS_FILE_PATH=${5-$DEFAULT_FUNCTIONS_FILE_PATH}
-source "$FUNCTIONS_FILE_PATH" ../../conf/secant.conf
 FOLDER_PATH=$4
+SHOULD_SECANT_SKIP_THIS_TEST=${5-false}
 
-if ! nmap -oX - $IP > $FOLDER_PATH/nmap_output.xml; then
-  logging $TEMPLATE_IDENTIFIER "During Nmap command appeared!" "ERROR"
+CURRENT_DIRECTORY=${PWD##*/}
+if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
+    source ../conf/secant.conf
+    source ../include/functions.sh
+else
+    if [[ "$CURRENT_DIRECTORY" == "secant" ]] ; then
+        source conf/secant.conf
+        source include/functions.sh
+    else
+        source ../../conf/secant.conf
+        source ../../include/functions.sh
+    fi
 fi
 
-cat $FOLDER_PATH/nmap_output.xml | python reporter.py $TEMPLATE_IDENTIFIER
+if $SHOULD_SECANT_SKIP_THIS_TEST;
+then
+  python reporter.py $TEMPLATE_IDENTIFIER "SKIP"
+  logging $TEMPLATE_IDENTIFIER "Skip NMAP_TEST." "DEBUG"
+else
+  if ! nmap -oX - $IP > $FOLDER_PATH/nmap_output.xml; then
+    python reporter.py $TEMPLATE_IDENTIFIER "FAIL"
+    logging $TEMPLATE_IDENTIFIER "NMAP_TEST failed due to error in nmap command!" "ERROR" "FAIL"
+  fi
+  cat $FOLDER_PATH/nmap_output.xml | python reporter.py $TEMPLATE_IDENTIFIER
+  if [ "$?" -eq "1" ];
+  then
+    python reporter.py $TEMPLATE_IDENTIFIER "FAIL"
+    logging $TEMPLATE_IDENTIFIER "NMAP_TEST failed, error appeared in reporter." "ERROR"
+  fi
+fi

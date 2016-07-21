@@ -3,7 +3,8 @@ VM_IP=$1
 VM_ID=$2 # VM ID in OpenNebula
 TEMPLATE_IDENTIFIER=$3
 FOLDER_PATH=$4
-SHOULD_SECANT_SKIP_THIS_TEST=$5
+SHOULD_SECANT_SKIP_THIS_TEST=${5-false}
+
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
     source ../conf/secant.conf
@@ -20,8 +21,8 @@ fi
 
 if $SHOULD_SECANT_SKIP_THIS_TEST;
 then
-    printf "SKIP" | python reporter.py $TEMPLATE_IDENTIFIER
     logging $TEMPLATE_IDENTIFIER "Skip LYNIS_TEST." "DEBUG"
+    printf "SKIP" | python reporter.py $TEMPLATE_IDENTIFIER
 else
     scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -r $lynis_directory/lynis/ root@$VM_IP:/tmp > /tmp/scp.log 2>&1
     if [ "$?" -eq "0" ];

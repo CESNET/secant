@@ -6,7 +6,6 @@ import py_functions
 
 template_id = sys.argv[1]
 py_functions.setLogging()
-logging.debug('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
 lynis = etree.Element('LYNIS_TEST')
 
 lynis_data = sys.stdin.readlines()
@@ -20,6 +19,7 @@ if lynis_data[0] == 'FAIL':
 elif lynis_data[0] == 'SKIP':
     lynis.set('status', 'SKIP')
 else:
+    logging.debug('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
     warnings = etree.SubElement(lynis, "WARNINGS")
     suggestions = etree.SubElement(lynis, "SUGGESTIONS")
     for line in lynis_data:

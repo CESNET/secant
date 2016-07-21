@@ -144,8 +144,10 @@ do
 	#Run internal tests
 	if [ -z "$ip_address_for_ssh" ]; then
 		logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
-		#onevm delete $VM_ID
-		#exit 1
+		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
+		do
+			(cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS "true" >> $FOLDER_TO_SAVE_REPORTS/report)
+		done
 	else
 		logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh" "DEBUG"
 		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/

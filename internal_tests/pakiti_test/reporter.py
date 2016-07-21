@@ -7,7 +7,6 @@ sys.path.append('../../include/')
 import py_functions
 
 py_functions.setLogging()
-logging.debug('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
 
 pakiti =  etree.Element('PAKITI_TEST')
 pakiti_data= sys.stdin.readlines()
@@ -21,6 +20,7 @@ elif pakiti_data[0] == 'FAIL':
 elif pakiti_data[0] == 'SKIP':
     pakiti.set('status', 'SKIP')
 else:
+    logging.debug('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
     pkg_count = 0
     for line in pakiti_data:
         pkg_count += 1
