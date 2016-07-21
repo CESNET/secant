@@ -34,12 +34,12 @@ delete_template_and_images(){
 
 	for image_name in "${images[@]}"
 	do
-	    DELETE_IMAGE_RESULT=$(oneimage delete $image_name)
+	    DELETE_IMAGE_RESULT=$(oneimage delete "$image_name")
 	    if [[ ! -n  $DELETE_IMAGE_RESULT ]]
 	    then
 	        logging $TEMPLATE_IDENTIFIER "Image: $image_name successfully deleted." "DEBUG"
 	    else
-            CHECK_FOR_IMAGE_MANAGE_ERROR=$(echo $RESULT | grep -o "Not authorized to perform MANAGE IMAGE \[.[0-9]*\]")
+            CHECK_FOR_IMAGE_MANAGE_ERROR=$(echo $DELETE_IMAGE_RESULT | grep -o "Not authorized to perform MANAGE IMAGE \[.[0-9]*\]")
             if [[ -n $CHECK_FOR_IMAGE_MANAGE_ERROR ]]
             then
                 logging $TEMPLATE_IDENTIFIER "Secant user is not authorized to delete image: $(echo $CHECK_FOR_IMAGE_MANAGE_ERROR | grep -o '[0-9]*')." "ERROR"
@@ -52,7 +52,7 @@ delete_template_and_images(){
 	then
 	    logging $TEMPLATE_IDENTIFIER "Template: $TEMPLATE_ID successfully deleted." "DEBUG"
     else
-        CHECK_FOR_TEMPLATE_MANAGE_ERROR=$(echo $RESULT | grep -o "Not authorized to perform MANAGE TEMPLATE \[.[0-9]*\]")
+        CHECK_FOR_TEMPLATE_MANAGE_ERROR=$(echo $DELETE_TEMPLATE_RESULT | grep -o "Not authorized to perform MANAGE TEMPLATE \[.[0-9]*\]")
         if [[ -n $CHECK_FOR_TEMPLATE_MANAGE_ERROR ]]
         then
             logging $TEMPLATE_IDENTIFIER "Secant user is not authorized to delete template: $(echo $CHECK_FOR_TEMPLATE_MANAGE_ERROR | grep -o '[0-9]*')." "ERROR"
@@ -68,11 +68,11 @@ waitall() {
       if kill -0 "$pid" 2>/dev/null; then
         set -- "$@" "$pid"
       elif wait "$pid"; then
-        logging ${temp_id_with_pid[${pid}]} "Analysis completed." "INFO"
+        logging ${temp_id_with_pid[${pid}]} "Analysis completed successfully." "INFO"
         delete_template_and_images $TEMPLATE_ID
       else
         clean_if_analysis_failed ${temp_id_with_pid[${pid}]}
-        logging ${temp_id_with_pid[${pid}]} "Analysis failed." "ERROR"
+        logging ${temp_id_with_pid[${pid}]} "Analysis finished with errors." "ERROR"
         delete_template_and_images $TEMPLATE_ID
         ((++errors))
       fi

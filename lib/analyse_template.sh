@@ -35,8 +35,8 @@ fi
 
 # Create folder to save the assessment result
 FOLDER_PATH=$reports_directory/$TEMPLATE_IDENTIFIER
-if [[ ! -d $FOLDER_PATH ]] ; then
-	i=2
+if [[ -d $FOLDER_PATH ]] ; then
+	i=1
 	while [[ -d $FOLDER_PATH-$i ]] ; do
        	let i++
   	done
@@ -46,7 +46,7 @@ fi
 
 FOLDER_TO_SAVE_REPORTS=
 VM_ID=
-for RUN_WITH_CONTEXT_SCRIPT in true #false true
+for RUN_WITH_CONTEXT_SCRIPT in false true
 do
 	if ! $RUN_WITH_CONTEXT_SCRIPT; then
 		logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
@@ -143,8 +143,8 @@ do
 
 	#Run internal tests
 	if [ -z "$ip_address_for_ssh" ]; then
-		logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected." "ERROR"
-		onevm delete $VM_ID
+		logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
+		#onevm delete $VM_ID
 		#exit 1
 	else
 		logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh" "DEBUG"
