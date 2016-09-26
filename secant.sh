@@ -69,11 +69,11 @@ waitall() {
         set -- "$@" "$pid"
       elif wait "$pid"; then
         logging ${temp_id_with_pid[${pid}]} "Analysis completed successfully." "INFO"
-        delete_template_and_images $TEMPLATE_ID
+        #delete_template_and_images $TEMPLATE_ID
       else
         clean_if_analysis_failed ${temp_id_with_pid[${pid}]}
         logging ${temp_id_with_pid[${pid}]} "Analysis finished with errors." "ERROR"
-        delete_template_and_images $TEMPLATE_ID
+        #delete_template_and_images $TEMPLATE_ID
         ((++errors))
       fi
     done
@@ -89,20 +89,19 @@ echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Debug information: $log_file."
 export ONE_XMLRPC=$ONE_XMLRPC
 oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '2,2p')) # Get first 5 templates ids
-#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
+#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n '25,25p')) # Get first 5 templates ids
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
 
-query='//NIFTY_ID' # attribute which determines that template should be analyzed
+query='//NIFTY_APPLIANCE_ID' # attribute which determines that template should be analyzed
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
-    #NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
-    #if [ -n "$NIFTY_ID" ]; then # n - for not empty
+    NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
+    if [ -n "$NIFTY_ID" ]; then # n - for not empty
         TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
-    #fi
+    fi
 done
 
-#TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID")
-TEMPLATE_IDENTIFIER=$TEMPLATE_ID
+#TEMPLATE_IDENTIFIER=$TEMPLATE_ID
 if [ ${#TEMPLATES_FOR_ANALYSIS[@]} -eq 0 ]; then
     logging "SECANT" "No templates for analysis." "INFO"
 else
@@ -114,7 +113,8 @@ else
             if [[ ! -e $reports_directory ]]; then
                 mkdir $reports_directory
             fi
-
+            #TEMPLATE_IDENTIFIER=$TEMPLATE_ID
+            TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID")
             ./lib/analyse_template.sh $TEMPLATE_ID $TEMPLATE_IDENTIFIER &
             logging $TEMPLATE_IDENTIFIER "Analysis started." "INFO"
             template_pid=$!

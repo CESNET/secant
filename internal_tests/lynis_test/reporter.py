@@ -14,11 +14,15 @@ lynis_data = sys.stdin.readlines()
 #if error_line:
 #    error = etree.SubElement(lynis, "ERROR")
 #    error.text = re.sub('Error: ', '', error_line.group(1)))
+error_message = re.search('Error: Missing Lynis report.*', lynis_data[0])
 if lynis_data[0] == 'FAIL':
     lynis.set('status', 'FAIL')
 elif lynis_data[0] == 'SKIP':
     lynis.set('status', 'SKIP')
+elif error_message:
+    lynis.set('status', 'FAIL')
 else:
+    logging.debug('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
     logging.debug('[%s] %s: Start LYNIS_TEST reporter.', template_id, 'DEBUG')
     warnings = etree.SubElement(lynis, "WARNINGS")
     suggestions = etree.SubElement(lynis, "SUGGESTIONS")

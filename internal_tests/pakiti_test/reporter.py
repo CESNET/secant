@@ -21,15 +21,14 @@ elif pakiti_data[0] == 'SKIP':
     pakiti.set('status', 'SKIP')
 else:
     logging.debug('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
-    pkg_count = 0
     for line in pakiti_data:
-        pkg_count += 1
-
+        if line[:2] == "OK":
+            pakiti.text = "No vulnerable packages."
+            break
         pkg_list = re.split('\s+', line[2:])
         pkg = etree.SubElement(pakiti, "PKG")
         pkg.text = pkg_list[0] + ", " + pkg_list[1] + ", " + pkg_list[2]
-    if pkg_count == 0:
-        pakiti.text = "No vulnerable packages."
+
 if 'status' not in pakiti.attrib:
     pakiti.set('status', 'OK')
 print etree.tostring(pakiti,pretty_print=True)

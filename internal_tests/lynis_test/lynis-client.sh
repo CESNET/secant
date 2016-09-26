@@ -2,13 +2,13 @@
 
 cd /tmp/lynis
 
-REPORT_LOCATION='/var/log/lynis-report.dat'
+REPORT_LOCATION='/tmp/lynis.txt'
 
-./lynis -c --cronjob > /dev/null
+./lynis -c --cronjob --logfile $REPORT_LOCATION > /dev/null
 
 if [ -f $REPORT_LOCATION ];
 then
-   grep 'Warning\|Suggestion' /var/log/lynis.log
+   grep 'Warning\|Suggestion' $REPORT_LOCATION
 else
    echo "Error: Missing Lynis report"
 fi

@@ -27,8 +27,9 @@ if  [ ! -d  $3 ]  ; then
   exit 1
 fi
 
-#MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_AD_MPURI/text()" -n)
-MPURI="https://appdb.egi.eu/store/vm/image/5429adc6-61bc-413d-b465-e8f655617ad4:5764/" # For test purposes
+MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_AD_MPURI/text()" -n)
+#MPURI="https://appdb.egi.eu/store/vm/image/5429adc6-61bc-413d-b465-e8f655617ad4:5764/" # For test purposes
+#MPURI="http://147.251.253.174/5429adc6-61bc-413d-b465-e8f655617ad4:5764/"
 wget "$MPURI"xml -O $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml > /dev/null 2>&1
 CONTEXT_SCRIPT_URL=$(xmlstarlet sel -t  -v "//virtualization:contextscript/url" -n $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml)
 wget $CONTEXT_SCRIPT_URL -O $USER_DATA_FILE > /dev/null 2>&1

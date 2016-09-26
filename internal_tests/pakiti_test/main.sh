@@ -4,7 +4,8 @@ VM_IP=$1
 VM_ID=$2 # VM ID in OpenNebul
 TEMPLATE_IDENTIFIER=$3
 FOLDER_PATH=$4
-SHOULD_SECANT_SKIP_THIS_TEST=${5-false}
+LOGIN_AS_USER=$5
+SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
 
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
@@ -26,7 +27,7 @@ then
     logging $TEMPLATE_IDENTIFIER "Skip PAKITI_TEST." "DEBUG"
 else
     # Remotely run Pakiti client
-    ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" "$LOGIN_AS_USER"@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
 
     # Check if pakiti-pkg file is empty
     if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
@@ -34,7 +35,7 @@ else
             printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
             logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed, due to empty report file." "ERROR"
     else
-        sed -i -e 's/host="[^"]\+"/host="'$TEMPLATE_IDENTIFIER'"/g' $FOLDER_PATH/pakiti_test-pkgs.txt
+        sed -i -e 's/host=""/host="'$TEMPLATE_IDENTIFIER'"/g' $FOLDER_PATH/pakiti_test-pkgs.txt
         ./pakiti2-client-meta-proxy.sh < $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt 2>&1
 
         if [ "$?" -eq "0" ];

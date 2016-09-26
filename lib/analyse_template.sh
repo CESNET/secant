@@ -67,7 +67,6 @@ do
 		VM_ID=$RETURN_MESSAGE
 	fi
 
-
 	if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
 	  VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
 	  logging $TEMPLATE_IDENTIFIER "Template successfully instantiated, VM_ID: $VM_ID" "DEBUG"
@@ -141,18 +140,26 @@ do
 		fi
 	done
 
+
 	#Run internal tests
 	if [ -z "$ip_address_for_ssh" ]; then
 		logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
 		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
 		do
-			(cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS "true" >> $FOLDER_TO_SAVE_REPORTS/report)
+			(cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS $LOGIN_AS_USER "true" >> $FOLDER_TO_SAVE_REPORTS/report)
 		done
 	else
-		logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh" "DEBUG"
+		LOGIN_AS_USER="root"
+		ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" "$ip_address_for_ssh" 2&> /tmp/$TEMPLATE_IDENTIFIER
+		SUGGESTED_USER=$(cat /tmp/$TEMPLATE_IDENTIFIER | grep -i "Please login as the user*" | sed -e 's/Please login as the user \"\(.*\)\" rather than the user \"root\"./\1/')
+		if [ ! -z "$SUGGESTED_USER" ]
+		then
+    		LOGIN_AS_USER="$SUGGESTED_USER"
+		fi
+		logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh, login as user: $LOGIN_AS_USER" "DEBUG"
 		for filename in $INTERNAL_TESTS_FOLDER_PATH/*/
 		do
-			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
+			(cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS $LOGIN_AS_USER >> $FOLDER_TO_SAVE_REPORTS/report)
 		done
 	fi
 

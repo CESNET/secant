@@ -10,15 +10,10 @@ else:
 
 def evaluateReport(report_file):
     alerts = []
+    ports = settings.get('NmapTest', 'Ports').split(', ')
     report = etree.parse(report_file)
-    find_text = etree.XPath("/SECANT/NTP_AMPLIFICATION_TEST/text()")
-
-    try:
-        ntp_amplitication_test_result =  find_text(report)[0]
-    except (ValueError,IndexError):
-        return alerts
-
-    regex = re.search('is\senable', ntp_amplitication_test_result)
-    if regex:
-        alerts.append(ntp_amplitication_test_result)
+    for port in ports:
+        find_text = etree.XPath( "/SECANT/NMAP_TEST/ports/port[contains(@portid, " + port + ")]")
+        if find_text(report):
+            alerts.append("Port " + port + " is open")
     return alerts

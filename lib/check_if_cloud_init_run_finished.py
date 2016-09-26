@@ -9,4 +9,4 @@ if os.path.exists(fin):
         else:
             sys.exit('Cloud-init finished with no errors.')
 else:
-    sys.exit(1)
+    sys.exit('1')
