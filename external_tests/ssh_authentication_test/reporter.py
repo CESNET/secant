@@ -17,20 +17,17 @@ if len(sys.argv) == 3:
     elif sys.argv[2] == 'SKIP':
         ssh_auth_test.set('status', 'SKIP')
 else:
-    stdout_data = sys.stdin.readlines()
-    for line in stdout_data:
-        regex = re.search('Permission\sdenied\s[(][a-z,-]+[,]password[a-z,)].*', line)
+    r = re.compile('Permission\sdenied\s.*')
+    login_reply = filter(r.match, sys.stdin.readlines())[0]
+    regex = re.search('Permission\sdenied\s[(][a-z,-]+[,]password[a-z,)].*', login_reply)
+    if regex:
+        ssh_auth_test.text = "SSH password authentication is allowed"
+    else:
+        regex = re.search('SSH port reported as filtered', login_reply)
         if regex:
-            ssh_auth_test.text = "SSH password authentication is allowed"
-            break
+            ssh_auth_test.text = regex.group(0)
         else:
-            regex = re.search('SSH port reported as filtered', line)
-            if regex:
-                ssh_auth_test.text = regex.group(0)
-                break
-            else:
-                ssh_auth_test.text = "SSH password authentication is not allowed"
-                break
+            ssh_auth_test.text = "SSH password authentication is not allowed"
 
 if 'status' not in ssh_auth_test.attrib:
     ssh_auth_test.set('status', 'OK')

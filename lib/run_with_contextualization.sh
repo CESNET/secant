@@ -3,11 +3,14 @@
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
     source ../include/functions.sh
+    GET_URL_FROM_IMAGE_PATH=get_url_from_image.sh
 else
     if [[ "$CURRENT_DIRECTORY" == "secant" ]] ; then
         source include/functions.sh
+        GET_URL_FROM_IMAGE_PATH=lib/get_url_from_image.sh
     else
         source ../include/functions.sh
+        GET_URL_FROM_IMAGE_PATH=get_url_from_image.sh
     fi
 fi
 
@@ -27,9 +30,11 @@ if  [ ! -d  $3 ]  ; then
   exit 1
 fi
 
-MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_AD_MPURI/text()" -n)
+#MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_AD_MPURI/text()" -n)
 #MPURI="https://appdb.egi.eu/store/vm/image/5429adc6-61bc-413d-b465-e8f655617ad4:5764/" # For test purposes
 #MPURI="http://147.251.253.174/5429adc6-61bc-413d-b465-e8f655617ad4:5764/"
+MPURI="$(./$GET_URL_FROM_IMAGE_PATH $TEMPLATE_ID)"
+echo $MPURI
 wget "$MPURI"xml -O $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml > /dev/null 2>&1
 CONTEXT_SCRIPT_URL=$(xmlstarlet sel -t  -v "//virtualization:contextscript/url" -n $REPORT_FOLDER/"$TEMPLATE_IDENTIFIER".xml)
 wget $CONTEXT_SCRIPT_URL -O $USER_DATA_FILE > /dev/null 2>&1

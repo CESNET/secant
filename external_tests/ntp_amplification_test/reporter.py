@@ -21,7 +21,7 @@ if len(sys.argv) == 3:
 else:
     stdout_data = sys.stdin.readlines()
     #regex = re.search('(?:[0-9]{1,3}\.){3}[0-9]{1,3}: timed out, nothing received', stdout_data[0])
-    print stdout_data[0]
+    #print stdout_data[0]
     regex = re.search('remote\saddress\s*port\slocal\saddress\s*count\sm\sver\srstr\savgint\s*lstint', stdout_data[0])
     if regex:
         ntp_amplification_test.text = "Monlist response is enable"

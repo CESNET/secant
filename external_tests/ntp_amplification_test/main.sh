@@ -28,16 +28,16 @@ then
   python reporter.py $TEMPLATE_IDENTIFIER "SKIP"
   logging $TEMPLATE_IDENTIFIER "Skip NTP_AMPLIFICATION_TEST." "DEBUG"
 else
-  ntpdc -n -c monlist $IP 2&> $FOLDER_PATH/ntp_output.txt
+  ntpdc -n -c monlist "$IP" &> $FOLDER_PATH/ntp_output.txt
   if [ "$?" -eq "1" ]; then
     python reporter.py $TEMPLATE_IDENTIFIER "FAIL"
-        logging $TEMPLATE_IDENTIFIER "NTP_AMPLIFICATION_TEST failed due to error in  command!" "ERROR" "FAIL"
+    logging $TEMPLATE_IDENTIFIER "NTP_AMPLIFICATION_TEST failed due to error in  command!" "ERROR" "FAIL"
   else
-    cat $FOLDER_PATH/nmap_output.txt | python reporter.py $TEMPLATE_IDENTIFIER
+    cat $FOLDER_PATH/ntp_output.txt | python reporter.py $TEMPLATE_IDENTIFIER
     if [ "$?" -eq "1" ];
     then
         python reporter.py $TEMPLATE_IDENTIFIER "FAIL"
-        logging $TEMPLATE_IDENTIFIER "NMAP_TEST failed, error appeared in reporter." "ERROR"
+        logging $TEMPLATE_IDENTIFIER "NTP_AMPLIFICATION_TEST failed, error appeared in reporter." "ERROR"
     fi
   fi
 fi

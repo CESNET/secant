@@ -27,7 +27,16 @@ then
     logging $TEMPLATE_IDENTIFIER "Skip PAKITI_TEST." "DEBUG"
 else
     # Remotely run Pakiti client
-    ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" "$LOGIN_AS_USER"@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
+    then
+        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey centos@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    fi
+
+    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
+    then
+        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey ubuntu@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    fi
 
     # Check if pakiti-pkg file is empty
     if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]

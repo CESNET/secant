@@ -46,7 +46,7 @@ fi
 
 FOLDER_TO_SAVE_REPORTS=
 VM_ID=
-for RUN_WITH_CONTEXT_SCRIPT in false true
+for RUN_WITH_CONTEXT_SCRIPT in false #true
 do
 	if ! $RUN_WITH_CONTEXT_SCRIPT; then
 		logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
@@ -95,16 +95,17 @@ do
 	done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
 
 	# Wait 80 seconds befor first test
-	sleep 80
+	sleep 140
 
 	if $RUN_WITH_CONTEXT_SCRIPT;
 	then
 		# Wait for contextualization
-		RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python - 2>&1)
+		# TODO edit SUGESTED USER instedad root
+		RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey root@${ipAddresses[0]} python - 2>&1)
 		while [[ $RESULT == "1" ]]
 		do
 			sleep 10
-			RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" root@${ipAddresses[0]} python - 2>&1)
+			RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey root@${ipAddresses[0]} python - 2>&1)
 		done
 		#logging $TEMPLATE_IDENTIFIER "$RESULT" "DEBUG"
 	fi
@@ -150,7 +151,7 @@ do
 		done
 	else
 		LOGIN_AS_USER="root"
-		ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" "$ip_address_for_ssh" 2&> /tmp/$TEMPLATE_IDENTIFIER
+		ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$ip_address_for_ssh" 2&> /tmp/$TEMPLATE_IDENTIFIER
 		SUGGESTED_USER=$(cat /tmp/$TEMPLATE_IDENTIFIER | grep -i "Please login as the user*" | sed -e 's/Please login as the user \"\(.*\)\" rather than the user \"root\"./\1/')
 		if [ ! -z "$SUGGESTED_USER" ]
 		then
