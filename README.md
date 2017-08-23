@@ -2,9 +2,11 @@
 Security Cloud Assessment Tool
 
 ###Introduction
+
 Secant is security assessment tool. Used to evaluate the security defenses of OS images uploaded by users of IaaS cloud. 
 
 ######How it works
+
 The assessment process consists of performing a set of steps.
 
 **Steps**
@@ -32,15 +34,19 @@ During the entire assessment process details about the process are stored in a l
 - `pakiti_test` - test the system against [Pakiti3](https://github.com/CESNET/pakiti3) to find packages with critical vulnerabilities. 
 
 ###Instalation
+
 ######Preparing Secant Host
+
 Secant host manage all assessment processes.  Secant is supposed to run on a Debian operating system and have two network interfaces. First interface with public ip address is used for internet connection and second interface with private ip is connected to the isolated enviroment where tested images will be instantiated. 
 
 You'll also need to create secant user in IaaS with enough permissions to instantiate templates from images which are waiting for analysis. You also need to ensure that secant user is able to access IaaS throgh command line. Instructions for MetaCloud can be found [here](https://wiki.metacentrum.cz/wiki/MetaCloud_access_through_command_line).
 
 ######Installing Secant
+
 Before proceeding on configuring Secant, you'll need to install some required software and libraries. For this purpose run `install.sh` script. Before running it fill in `lynis_version` and `lynis_directory` in `conf/secant.conf`. It is recommended to use the latest Lynis version.  
 
 ######Configuration
+
 Secant has two main configuration files:
 - `secant.conf`:for configuring general settings
 ```
@@ -78,4 +84,5 @@ Warnings:
 Suggestions:
 ```
 ######Using Secant
+
 Use `./secant.sh` to start the program. After starting Secant starts searching for the images that are waiting for analysis. Once the process is complete, Secant delete image and template from the queue. 
