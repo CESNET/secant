@@ -38,11 +38,19 @@ else
         if [ "$?" -eq "0" ];
         then
             LOGIN_AS_USER=ubuntu
+        else
+            scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r $lynis_directory/lynis/ secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
+            logging $TEMPLATE_IDENTIFIER "Try to login as user secant" "INFO"
+            if [ "$?" -eq "0" ];
+            then
+                LOGIN_AS_USER=secant
+                logging $TEMPLATE_IDENTIFIER "Login as user secant was successful!" "INFO"
+            fi
         fi
     fi
     if [ "$?" -eq "0" ];
     then
-        if ! ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
+        if ! ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
             logging $TEMPLATE_IDENTIFIER] "During Lynis testing!" "ERROR"
         fi
         cat $FOLDER_PATH/lynis_test.txt | python reporter.py $TEMPLATE_IDENTIFIER

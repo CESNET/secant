@@ -31,3 +31,11 @@ sudo pip install --upgrade virtualenv
 
 # Install lxml
 pip install lxml
+
+# Install ARGO messaging service (devel!)
+wget https://github.com/ARGOeu/argo-ams-library/archive/devel.zip -P /tmp
+unzip /tmp/devel.zip -d /tmp
+cd /tmp/argo-ams-library-devel
+sudo python setup.py install
+rm -r /tmp/argo-ams-library-devel/
+rm /tmp/devel.zip

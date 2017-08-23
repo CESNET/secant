@@ -10,7 +10,7 @@ else:
 
 def evaluateReport(report_file):
     alerts = []
-    ports = settings.get('NmapTest', 'Ports').split(', ')
+    ports = settings.get('NMAP_TEST', 'Ports').split(', ')
     report = etree.parse(report_file)
     for port in ports:
         find_text = etree.XPath( "/SECANT/NMAP_TEST/ports/port[contains(@portid, " + port + ")]")

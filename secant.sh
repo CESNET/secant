@@ -87,16 +87,17 @@ print_ascii_art
 echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Start Secant."
 echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Debug information: $log_file."
 
-export ONE_XMLRPC=$ONE_XMLRPC
-oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
+# Generate user tocken
+#export ONE_XMLRPC=$ONE_XMLRPC
+#oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
 
 #TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "$TEMPLATE_NUMBER,$TEMPLATE_NUMBER p")) # Get first 5 templates ids
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "27,37p")) # Get first 5 templates ids
+#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "70,70p")) # Get first 5 templates ids
 
-#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
+TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
 
-#query='//NIFTY_APPLIANCE_ID' # attribute which determines that template should be analyzed
-query='//VMCATCHER_EVENT_DC_IDENTIFIER'
+query='//CLOUDKEEPER_APPLIANCE_MPURI' # attribute which determines that template should be analyzed
+#query='//VMCATCHER_EVENT_DC_IDENTIFIER'
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
     NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
@@ -117,8 +118,8 @@ else
             if [[ ! -e $reports_directory ]]; then
                 mkdir $reports_directory
             fi
-            TEMPLATE_IDENTIFIER=$TEMPLATE_ID
-            #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//NIFTY_APPLIANCE_ID")
+            #TEMPLATE_IDENTIFIER=$TEMPLATE_ID
+            TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//CLOUDKEEPER_APPLIANCE_ID")
             #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")
             ./lib/analyse_template.sh $TEMPLATE_ID $TEMPLATE_IDENTIFIER &
             logging $TEMPLATE_IDENTIFIER "Analysis started." "INFO"
@@ -129,4 +130,4 @@ else
     done
 fi
 
-waitall $pids
+waitall ${pids}

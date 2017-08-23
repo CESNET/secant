@@ -21,6 +21,11 @@ else
     fi
 fi
 
+if [[ $# -eq 0 ]] ; then
+    echo 'No input arguments'
+    exit 1
+fi
+
 if $SHOULD_SECANT_SKIP_THIS_TEST;
 then
     printf "SKIP" | python reporter.py $TEMPLATE_IDENTIFIER
@@ -36,6 +41,11 @@ else
     if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
     then
         ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey ubuntu@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
+    fi
+
+    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
+    then
+        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
     fi
 
     # Check if pakiti-pkg file is empty

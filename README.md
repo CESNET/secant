@@ -67,11 +67,11 @@ KEY_PATH=/root/.secant/secant-key.pem
 ```
 - `assessment.conf`:for configuring individual tests options
 ```
-[NmapTest]
+[NMAP_TEST]
 # List of ports which should be closed.
 Ports: 53, 19, 123, 161
 
-[LynisTest]
+[LYNIS_TEST]
 # IDs of Lynis warnings and suggestions separated by commas.
 # For example: NETW-2704, SSH-7412...
 Warnings:

@@ -82,8 +82,6 @@ then
 
 else
 
-
-
 	# Getting parameters from the configuration file
 
 	L_SERVERS=`grep servers_name ${CONF} | grep -v \# | awk  -F "=" '{print $2}' | tr -d " "`

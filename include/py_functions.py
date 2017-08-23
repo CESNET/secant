@@ -1,6 +1,7 @@
 import ConfigParser
 import logging
 import errno,sys,os,re, mmap
+from lxml import etree
 
 class FakeSecHead(object):
     def __init__(self, fp):
@@ -16,6 +17,21 @@ class FakeSecHead(object):
         else:
             return self.fp.readline()
 
+def check_if_test_completed_successfully(test_name, report_file):
+    report = etree.parse(report_file)
+    status_ok = etree.XPath("//SECANT/" + test_name + "[@status=\"OK\"]")
+    status_skip = etree.XPath("//SECANT/" + test_name + "[@status=\"SKIP\"]")
+    status_fail = etree.XPath("//SECANT/" + test_name + "[@status=\"FAIL\"]")
+    return_str = ''
+    if status_ok(report):
+        return_str = '' # True, finished successfully withou errors
+    elif status_skip(report):
+        return_str = 'Test has been skipped due to unsuccessful SSH accesss'
+    elif status_fail(report):
+        get_text = etree.XPath("text()")
+        return_str = get_text(status_fail(report)[0])
+    return return_str
+
 def getSettingsFromBashConfFile(config_file, key):
     cp = ConfigParser.SafeConfigParser()
     try:
@@ -25,13 +41,12 @@ def getSettingsFromBashConfFile(config_file, key):
     return [x[1] for x in cp.items('asection') if x[0] == key][0]
 
 def setLogging():
-    if os.path.split(os.getcwd())[-1] == 'lib':
+    if os.path.split(os.getcwd())[-1] == 'lib' or os.path.split(os.getcwd())[-1] == 'cron_scripts':
         secant_conf_path = '../conf/secant.conf'
+    elif os.path.split(os.getcwd())[-1] == 'secant':
+        secant_conf_path = 'conf/secant.conf'
     else:
-        if os.path.split(os.getcwd())[-1] == 'secant':
-            secant_conf_path = 'conf/secant.conf'
-        else:
-            secant_conf_path = '../../conf/secant.conf'
+        secant_conf_path = '../../conf/secant.conf'
 
     debug = ""
     with open(secant_conf_path, 'r+') as f:
