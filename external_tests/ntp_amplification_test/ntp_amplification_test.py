@@ -2,7 +2,7 @@ from lxml import etree
 import ConfigParser, os, re
 
 settings = ConfigParser.ConfigParser()
-settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'assessment.conf')
+settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'assessment.conf'
 
 def evaluateReport(report_file):
     alerts = []

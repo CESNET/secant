@@ -21,8 +21,7 @@ def pullAllMessages(ams, subscription, log):
 class TestArgoMessageService(unittest.TestCase):
     def testPushAndPull(self):
         settings = ConfigParser.ConfigParser()
-        settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'argo.conf')
-
+        settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'argo.conf'
         host = settings.get('AMS-GENERAL', 'host')
         project = settings.get('AMS-GENERAL', 'project')
         token = settings.get('AMS-GENERAL', 'token')
