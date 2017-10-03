@@ -11,17 +11,14 @@ import logging
 external_tests_path=""
 internal_tests_path=""
 assessment_settings = ConfigParser.ConfigParser()
+assessment_settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'assessment.conf'
 secant_settings = ConfigParser.ConfigParser()
 if os.path.split(os.getcwd())[-1] == 'lib':
     sys.path.append('../include')
-    assessment_settings.read('../conf/assessment.conf')
-    #secant_settings.read('../conf/secant.conf')
     external_tests_path="../external_tests"
     internal_tests_path="../internal_tests"
 else:
     sys.path.append('include')
-    assessment_settings.read('conf/assessment.conf')
-    #secant_settings.read('conf/secant.conf')
     external_tests_path="external_tests"
     internal_tests_path="internal_tests"
 

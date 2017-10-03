@@ -3,11 +3,7 @@ from lxml import etree
 import ConfigParser
 
 settings = ConfigParser.ConfigParser()
-
-if os.path.split(os.getcwd())[-1] == 'lib':
-    settings.read('../conf/assessment.conf')
-else:
-    settings.read('conf/assessment.conf')
+settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'assessment.conf'
 
 def evaluateReport(report_file):
     alerts = []

@@ -21,10 +21,7 @@ class ArgoCommunicator(object):
         """Return a Customer object whose name is *name* and starting
         balance is *balance*."""
         settings = ConfigParser.ConfigParser()
-        if os.getcwd().split('/')[-1] == 'secant':
-            settings.read('conf/argo.conf')
-        elif os.getcwd().split('/')[-1] == 'lib' or os.getcwd().split('/')[-1] == 'cron_scripts' or os.getcwd().split('/')[-1] == 'tests':
-            settings.read('../conf/argo.conf')
+        settings.read(os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'argo.conf'
 
         self.host = settings.get('AMS-GENERAL', 'host')
         self.project = settings.get('AMS-GENERAL', 'project')

@@ -24,7 +24,7 @@ During the entire assessment process details about the process are stored in a l
 ######Individual tests
 
 **External tests**
-- `nmap_test` - scan ports with [Nmap](https://nmap.org). Ports which should be closed can be specified in `conf/assessment.conf`
+- `nmap_test` - scan ports with [Nmap](https://nmap.org). Ports which should be closed can be specified in `assessment.conf`
 - `ssh_authentication_test` - check if SSH password authentication is allowed. If yes, test ends unsuccessfully.  
 
 **Internal tests**
@@ -65,7 +65,7 @@ CERT_PATH=/root/.secant/secant-cert.pem
 # Specify the path to the secant key. Make sure this path is correct.
 KEY_PATH=/root/.secant/secant-key.pem
 ```
-- `assessment.conf`:for configuring individual tests options
+- `assessment.conf`:for configuring individual tests options. By the default, the file is expected in `/etc/secant/assessment.conf', an alterative location can be specified using the `SECANT_CONFIG_DIR' environment variable.
 ```
 [NMAP_TEST]
 # List of ports which should be closed.
