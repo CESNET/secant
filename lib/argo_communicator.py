@@ -3,10 +3,10 @@ import ConfigParser, tempfile, sys, os, logging, argparse
 from pathlib2 import Path
 
 
-if os.getcwd().split('/')[-1] == 'secant' or os.getcwd().split('/')[-1] == 'cron_scripts' or os.getcwd().split('/')[-1] == 'tests':
+if os.getcwd().split('/')[-1] == 'secant':
     sys.path.append('include')
     import py_functions
-elif os.getcwd().split('/')[-1] == 'lib':
+elif os.getcwd().split('/')[-1] == 'lib' or os.getcwd().split('/')[-1] == 'cron_scripts' or os.getcwd().split('/')[-1] == 'tests':
     sys.path.append('../include')
     import py_functions
     py_functions.setLogging()
