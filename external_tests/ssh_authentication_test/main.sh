@@ -4,7 +4,8 @@ TEMPLATE_IDENTIFIER=$3
 FOLDER_PATH=$4
 SHOULD_SECANT_SKIP_THIS_TEST=${5-false}
 
-source ${SECANT_CONFIG:-/etc/secant/secant.conf}
+CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+source ${CONFIG_DIR}/secant.conf
 
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then

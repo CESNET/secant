@@ -42,7 +42,7 @@ Before proceeding on configuring Secant, you'll need to install some required so
 
 ######Configuration
 Secant has two main configuration files:
-- `secant.conf`:for configuring general settings. The default location is `/etc/secant/secant.conf', an alterative location can be specified using the `SECANT_CONFIG' environment variable.
+- `secant.conf`:for configuring general settings. The default configuration is expected  in `/etc/secant/secant.conf', an alterative location can be specified using the `SECANT_CONFIG_DIR' environment variable.
 ```
 # The current stable version of Lynis which you want to download.
 lynis_version=2.1.1

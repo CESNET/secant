@@ -41,7 +41,7 @@ def getSettingsFromBashConfFile(config_file, key):
     return [x[1] for x in cp.items('asection') if x[0] == key][0]
 
 def setLogging():
-    secant_conf_path = os.environ.get('SECANT_CONFIG', '/etc/secant/secant.conf')
+    secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
 
     debug = ""
     with open(secant_conf_path, 'r+') as f:

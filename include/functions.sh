@@ -4,7 +4,8 @@
 #SECANT_CONF_PATH=${1-$DEFAULT_SECANT_CONF_PATH}
 #source "$SECANT_CONF_PATH"
 
-source ${SECANT_CONFIG:-/etc/secant/secant.conf}
+CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+source ${CONFIG_DIR}/secant.conf
 
 logging() {
     if [[ $3 == "INFO" ]]; then

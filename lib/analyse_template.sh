@@ -15,7 +15,8 @@ CURRENT_DIRECTORY=${PWD##*/}
 EXTERNAL_TESTS_FOLDER_PATH=
 INTERNAL_TESTS_FOLDER_PATH=
 
-source ${SECANT_CONFIG:-/etc/secant/secant.conf}
+CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+source ${CONFIG_DIR}/secant.conf
 
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
 	EXTERNAL_TESTS_FOLDER_PATH=../external_tests
