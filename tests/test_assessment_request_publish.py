@@ -6,7 +6,7 @@ import base64
 
 def main():
     parser = ArgumentParser(description="AMS message publish")
-    parser.add_argument('--host', type=str, default='', help='FQDN of AMS Service')
+    parser.add_argument('--host', type=str, default='messaging-devel.argo.grnet.gr', help='FQDN of AMS Service')
     parser.add_argument('--token', type=str, default='', help='Given token')
     parser.add_argument('--project', type=str, default='appdb-sec-test', help='Project  registered in AMS Service')
     parser.add_argument('--topic', type=str, default='VMISECURITY-REQUESTS', help='Given topic')

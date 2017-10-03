@@ -45,6 +45,8 @@ def setLogging():
         secant_conf_path = '../conf/secant.conf'
     elif os.path.split(os.getcwd())[-1] == 'secant':
         secant_conf_path = 'conf/secant.conf'
+    elif os.path.split(os.getcwd())[-1] == 'tests':
+        secant_conf_path = '../conf/secant.conf'
     else:
         secant_conf_path = '../../conf/secant.conf'
 

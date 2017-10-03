@@ -6,7 +6,7 @@ VERSION="4"
 
 CONF=''
 
-SERVERS="pakiti.com"
+SERVERS="pakiti.ics.muni.cz"
 
 SERVER_URL="/feed3/"
 

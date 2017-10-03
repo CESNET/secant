@@ -3,7 +3,7 @@ import ConfigParser, tempfile, sys, os, logging, argparse
 from pathlib2 import Path
 
 
-if os.getcwd().split('/')[-1] == 'secant':
+if os.getcwd().split('/')[-1] == 'secant' or os.getcwd().split('/')[-1] == 'cron_scripts' or os.getcwd().split('/')[-1] == 'tests':
     sys.path.append('include')
     import py_functions
 elif os.getcwd().split('/')[-1] == 'lib':
@@ -23,7 +23,7 @@ class ArgoCommunicator(object):
         settings = ConfigParser.ConfigParser()
         if os.getcwd().split('/')[-1] == 'secant':
             settings.read('conf/argo.conf')
-        elif os.getcwd().split('/')[-1] == 'lib':
+        elif os.getcwd().split('/')[-1] == 'lib' or os.getcwd().split('/')[-1] == 'cron_scripts' or os.getcwd().split('/')[-1] == 'tests':
             settings.read('../conf/argo.conf')
 
         self.host = settings.get('AMS-GENERAL', 'host')
@@ -44,6 +44,29 @@ class ArgoCommunicator(object):
             logging.debug('[%s] %s: Results has been successfully pushed.', niftyId, 'DEBUG')
         except AmsException as e:
             print e
+
+    def get_assessment_results(self):
+        """
+         :return:
+        """
+        ams = ArgoMessagingService(endpoint=self.host, token=self.token, project=self.project)
+        ackids = list()
+        niftyids = list()
+        logging.debug('[%s] %s: Start pulling from the %s subscription', 'SECANT', 'DEBUG', self.resultSubscription)
+        pull_subscription = ams.pull_sub(self.resultSubscription, 10, True)
+        logging.debug('[%s] %s: Finish pulling from the %s subscription', 'SECANT', 'DEBUG', self.resultSubscription)
+        if pull_subscription:
+            for id, msg in pull_subscription:
+                attr = msg.get_attr()
+                data = msg.get_data()
+                ackids.append(id)
+        else:
+            logging.debug('[%s] %s: No new requests to pull in %s subscription', 'SECANT', 'DEBUG', self.resultSubscription)
+
+        if ackids:
+            ams.ack_sub(self.resultSubscription, ackids)
+
+        return niftyids
 
     def get_templates_for_assessment(self):
         """
