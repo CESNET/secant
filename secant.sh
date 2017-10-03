@@ -6,7 +6,7 @@ if [[ "$CURRENT_DIRECTORY" != "secant" ]] ; then
 	echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] ERROR: Please run Secant from the secant directory."
 	exit 0
 fi
-source conf/secant.conf
+source ${SECANT_CONFIG:-/etc/secant/secant.conf}
 source include/functions.sh
 
 declare -A temp_id_with_pid

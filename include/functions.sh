@@ -1,22 +1,10 @@
 #!/usr/bin/env bash
 # $1 : secant conf file path
 
-#DEFAULT_SECANT_CONF_PATH=../../conf/secant.conf
 #SECANT_CONF_PATH=${1-$DEFAULT_SECANT_CONF_PATH}
 #source "$SECANT_CONF_PATH"
 
-CURRENT_DIRECTORY=${PWD##*/}
-if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-    source ../conf/secant.conf
-else
-    if [[ "$CURRENT_DIRECTORY" == "secant" ]] ; then
-        source conf/secant.conf
-    else
-        source ../../conf/secant.conf
-    fi
-fi
-
-
+source ${SECANT_CONFIG:-/etc/secant/secant.conf}
 
 logging() {
     if [[ $3 == "INFO" ]]; then

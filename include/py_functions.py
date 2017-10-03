@@ -41,14 +41,7 @@ def getSettingsFromBashConfFile(config_file, key):
     return [x[1] for x in cp.items('asection') if x[0] == key][0]
 
 def setLogging():
-    if os.path.split(os.getcwd())[-1] == 'lib' or os.path.split(os.getcwd())[-1] == 'cron_scripts':
-        secant_conf_path = '../conf/secant.conf'
-    elif os.path.split(os.getcwd())[-1] == 'secant':
-        secant_conf_path = 'conf/secant.conf'
-    elif os.path.split(os.getcwd())[-1] == 'tests':
-        secant_conf_path = '../conf/secant.conf'
-    else:
-        secant_conf_path = '../../conf/secant.conf'
+    secant_conf_path = os.environ.get('SECANT_CONFIG', '/etc/secant/secant.conf')
 
     debug = ""
     with open(secant_conf_path, 'r+') as f:

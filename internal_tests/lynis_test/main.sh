@@ -6,16 +6,15 @@ FOLDER_PATH=$4
 LOGIN_AS_USER=$5
 SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
 
+source ${SECANT_CONFIG:-/etc/secant/secant.conf}
+
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-    source ../conf/secant.conf
     source ../include/functions.sh
 else
     if [[ "$CURRENT_DIRECTORY" == "secant" ]] ; then
-        source conf/secant.conf
         source include/functions.sh
     else
-        source ../../conf/secant.conf
         source ../../include/functions.sh
     fi
 fi

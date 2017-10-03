@@ -4,24 +4,23 @@ TEMPLATE_ID=$1
 TEMPLATE_IDENTIFIER=$2
 BASE_MPURI=$3
 
-#DEFAULT_SECANT_CONF_PATH=../conf/secant.conf
 #SECANT_CONF_PATH=${3-$DEFAULT_SECANT_CONF_PATH}
 #source "$SECANT_CONF_PATH"
 #
 #DEFAULT_FUNCTIONS_FILE_PATH=../include/functions.sh
 #FUNCTIONS_FILE_PATH=${4-$DEFAULT_FUNCTIONS_FILE_PATH}
-#source "$FUNCTIONS_FILE_PATH" ../conf/secant.conf
 
 # Check from which folder script is running
 CURRENT_DIRECTORY=${PWD##*/}
 EXTERNAL_TESTS_FOLDER_PATH=
 INTERNAL_TESTS_FOLDER_PATH=
 
+source ${SECANT_CONFIG:-/etc/secant/secant.conf}
+
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
 	EXTERNAL_TESTS_FOLDER_PATH=../external_tests
 	INTERNAL_TESTS_FOLDER_PATH=../internal_tests
 	LIB_FOLDER_PATH=""
-	source ../conf/secant.conf
 	source ../include/functions.sh
 	RUN_WITH_CONTEXT_SCRIPT_PATH=run_with_contextualization.sh
 	CTX_ADD_USER=ctx.add_user_secant
@@ -30,7 +29,6 @@ if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
 else
 	EXTERNAL_TESTS_FOLDER_PATH=external_tests
 	INTERNAL_TESTS_FOLDER_PATH=internal_tests
-	source conf/secant.conf
 	source include/functions.sh
 	LIB_FOLDER_PATH="lib"
 	RUN_WITH_CONTEXT_SCRIPT_PATH=lib/run_with_contextualization.sh

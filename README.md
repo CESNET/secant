@@ -19,7 +19,7 @@ The assessment process consists of performing a set of steps.
 
 5. Make assessment using report and predefined rules.
 
-During the entire assessment process details about the process are stored in a log file (path can be specified in `conf/secant.conf`). When the process is successfully ended, findings can be find in a report file and assessment results in a result file.
+During the entire assessment process details about the process are stored in a log file (path can be specified in `secant.conf`). When the process is successfully ended, findings can be find in a report file and assessment results in a result file.
 
 ######Individual tests
 
@@ -28,7 +28,7 @@ During the entire assessment process details about the process are stored in a l
 - `ssh_authentication_test` - check if SSH password authentication is allowed. If yes, test ends unsuccessfully.  
 
 **Internal tests**
-- `lynis_test` - upload [Lynis](https://cisofy.com/lynis/) (security auditing tool) to a virtual machine. Lynis scans the system and generate a report. Which Lynis warnings or suggestions will be considered as critical, can be specified in conf/secant.conf. If some of these critical warnings or suggestions appear, test ends unsuccessfully. 
+- `lynis_test` - upload [Lynis](https://cisofy.com/lynis/) (security auditing tool) to a virtual machine. Lynis scans the system and generate a report. Which Lynis warnings or suggestions will be considered as critical, can be specified in secant.conf. If some of these critical warnings or suggestions appear, test ends unsuccessfully. 
 - `pakiti_test` - test the system against [Pakiti3](https://github.com/CESNET/pakiti3) to find packages with critical vulnerabilities. 
 
 ###Instalation
@@ -38,11 +38,11 @@ Secant host manage all assessment processes.  Secant is supposed to run on a Deb
 You'll also need to create secant user in IaaS with enough permissions to instantiate templates from images which are waiting for analysis. You also need to ensure that secant user is able to access IaaS throgh command line. Instructions for MetaCloud can be found [here](https://wiki.metacentrum.cz/wiki/MetaCloud_access_through_command_line).
 
 ######Installing Secant
-Before proceeding on configuring Secant, you'll need to install some required software and libraries. For this purpose run `install.sh` script. Before running it fill in `lynis_version` and `lynis_directory` in `conf/secant.conf`. It is recommended to use the latest Lynis version.  
+Before proceeding on configuring Secant, you'll need to install some required software and libraries. For this purpose run `install.sh` script. Before running it fill in `lynis_version` and `lynis_directory` in `secant.conf`. It is recommended to use the latest Lynis version.  
 
 ######Configuration
 Secant has two main configuration files:
-- `secant.conf`:for configuring general settings
+- `secant.conf`:for configuring general settings. The default location is `/etc/secant/secant.conf', an alterative location can be specified using the `SECANT_CONFIG' environment variable.
 ```
 # The current stable version of Lynis which you want to download.
 lynis_version=2.1.1

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Load a configuration from secant.conf
-source conf/secant.conf
+source ${SECANT_CONFIG:-/etc/secant/secant.conf}
 
 # Install Lynis
 # https://github.com/CISOfy/lynis.git
