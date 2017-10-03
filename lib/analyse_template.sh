@@ -2,6 +2,7 @@
 
 TEMPLATE_ID=$1
 TEMPLATE_IDENTIFIER=$2
+BASE_MPURI=$3
 
 #DEFAULT_SECANT_CONF_PATH=../conf/secant.conf
 #SECANT_CONF_PATH=${3-$DEFAULT_SECANT_CONF_PATH}
@@ -177,9 +178,9 @@ do
 
 	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-		python assessment.py $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS/report.xml $VERSION >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+		python assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	else
-		python lib/assessment.py $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS/report.xml $VERSION >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+		python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
 	fi
 
 	logging $TEMPLATE_IDENTIFIER "Delete Virtual Machine $VM_ID." "DEBUG"

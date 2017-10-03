@@ -29,7 +29,7 @@ import py_functions
 
 py_functions.setLogging()
 
-def assessment(template_id, report_file, tests_version):
+def assessment(template_id, report_file, tests_version, base_mpuri):
     total_outcome = False
     secant =  etree.Element('SECANT')
     version = etree.SubElement(secant, "VERSION")
@@ -38,7 +38,7 @@ def assessment(template_id, report_file, tests_version):
     outcome = etree.SubElement(secant, "OUTCOME")
     log = etree.SubElement(secant, "LOG")
     version.text = tests_version
-    imageID.text = template_id
+    imageID.text = base_mpuri
 
     for tests_type in (external_tests_path, internal_tests_path):
         for dir_name in os.listdir(tests_type):
@@ -78,4 +78,4 @@ def assessment(template_id, report_file, tests_version):
     print etree.tostring(secant,pretty_print=True)
 
 if __name__ == "__main__":
-   assessment(sys.argv[1], sys.argv[2], sys.argv[3])
+   assessment(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
