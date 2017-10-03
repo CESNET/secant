@@ -70,11 +70,10 @@ waitall() {
         set -- "$@" "$pid"
       elif wait "$pid"; then
         logging ${temp_id_with_pid[${pid}]} "Analysis completed successfully." "INFO"
-        #delete_template_and_images $TEMPLATE_ID
+        [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
       else
         clean_if_analysis_failed ${temp_id_with_pid[${pid}]}
         logging ${temp_id_with_pid[${pid}]} "Analysis finished with errors." "ERROR"
-        #delete_template_and_images $TEMPLATE_ID
         ((++errors))
       fi
     done
