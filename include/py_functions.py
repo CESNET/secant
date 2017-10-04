@@ -38,6 +38,7 @@ def getSettingsFromBashConfFile(config_file, key):
         cp.readfp(FakeSecHead(open(config_file)))
     except IOError as e:
         raise IOError('Cannot open secant.conf file: ' + os.path.split(os.getcwd())[-1])
+    key = key.lower()
     return [x[1] for x in cp.items('asection') if x[0] == key][0]
 
 def setLogging():
