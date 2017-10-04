@@ -65,7 +65,7 @@ class ArgoCommunicator(object):
 
         return niftyids
 
-    def get_templates_for_assessment(self):
+    def get_templates_for_assessment(self, img_dir):
         """
         :return:
         """
@@ -79,10 +79,11 @@ class ArgoCommunicator(object):
             for id, msg in pull_subscription:
                 attr = msg.get_attr()
                 data = msg.get_data()
-                image_list_file = tempfile.NamedTemporaryFile(prefix='tmp_', delete=False, suffix='.list')
+                image_list_file = tempfile.NamedTemporaryFile(prefix='tmp_', delete=False, suffix='.list', dir=img_dir)
+                os.chmod(image_list_file.name, 0o644)
                 image_list_file.write(data)
                 image_list_file.close()
-                niftyids.append(image_list_file.name)
+                niftyids.append(os.path.basename(image_list_file.name))
                 ackids.append(id)
         else:
             logging.debug('[%s] %s: No new requests to pull', 'SECANT', 'DEBUG')

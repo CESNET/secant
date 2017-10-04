@@ -25,9 +25,14 @@ def runcmd(cmd):
 
 if __name__ == "__main__":
     argo = ArgoCommunicator()
-    for img_list in argo.get_templates_for_assessment():
+    secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
+    url = py_functions.getSettingsFromBashConfFile(secant_conf_path, "IMAGE_LIST_URL")
+    dir = py_functions.getSettingsFromBashConfFile(secant_conf_path, "IMAGE_LIST_DIR")
+
+    for img_list in argo.get_templates_for_assessment(dir):
         #sudo -u cloudkeeper /opt/cloudkeeper/bin/cloudkeeper --image-lists=https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list --debug
         logging.debug('[%s] %s: Process image list: ' + img_list, 'SECANT', 'DEBUG')
         #img_list = "https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list"
-        debug_info = runcmd(["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_list, "--debug"])
+        img_url = "%s/%s" % (url, img_list)
+        debug_info = runcmd(["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
         logging.debug(debug_info)
