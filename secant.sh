@@ -83,9 +83,8 @@ waitall() {
    done
  }
 
-print_ascii_art
-echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Start Secant."
-echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] INFO: Debug information: $log_file."
+#print_ascii_art
+logging "SECANT" "Starting"
 
 # Generate user tocken
 #export ONE_XMLRPC=$ONE_XMLRPC
