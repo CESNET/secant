@@ -17,11 +17,10 @@ py_functions.setLogging()
 def runcmd(cmd):
     try:
         output = subprocess.check_output(cmd)
-        print output
-        return output
     except:
-        print "Failed"
-        return None
+        raise
+
+    return output
 
 if __name__ == "__main__":
     argo = ArgoCommunicator()
@@ -29,10 +28,16 @@ if __name__ == "__main__":
     url = py_functions.getSettingsFromBashConfFile(secant_conf_path, "IMAGE_LIST_URL")
     dir = py_functions.getSettingsFromBashConfFile(secant_conf_path, "IMAGE_LIST_DIR")
 
-    for img_list in argo.get_templates_for_assessment(dir):
+    images = argo.get_templates_for_assessment(dir)
+    logging.info("Secant consumer: Obtained %d templates for assessment" % (len(images)))
+
+    for img_list in images:
         #sudo -u cloudkeeper /opt/cloudkeeper/bin/cloudkeeper --image-lists=https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list --debug
-        logging.debug('[%s] %s: Process image list: ' + img_list, 'SECANT', 'DEBUG')
         #img_list = "https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list"
         img_url = "%s/%s" % (url, img_list)
-        debug_info = runcmd(["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
-        logging.debug(debug_info)
+        try:
+            debug_info = runcmd(["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
+        except:
+            logging.error("Secant consumer: Registering image list %s failed" % (img_list))
+            continue
+        logging.debug("Secant consumer: Image list %s has been registered (%s)" % (img_list, debug_info))
