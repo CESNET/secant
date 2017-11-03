@@ -32,10 +32,10 @@ class ArgoCommunicator(object):
         self.resultSubscription = settings.get('RESULTS', 'subscription')
         self.nummsgs = 3
 
-    def post_assessment_results(self, niftyId, file_path):
+    def post_assessment_results(self, niftyId, file_path, base_mpuri):
         ams = ArgoMessagingService(endpoint=self.host, token=self.token, project=self.project)
         contents = Path(file_path).read_text()
-        msg = AmsMessage(data=contents, attributes={'NIFTY_APPLIANCE_ID': niftyId}).dict()
+        msg = AmsMessage(data=contents, attributes={'NIFTY_APPLIANCE_ID': niftyId, 'BASE_MPURI': base_mpuri}).dict()
         try:
             ret = ams.publish(self.resultTopic, msg)
             logging.debug('[%s] %s: Results has been successfully pushed.', niftyId, 'DEBUG')
@@ -107,10 +107,11 @@ if __name__ == '__main__':
     parser.add_argument('--mode', help='Mode: pull/push', required=True)
     parser.add_argument('--niftyID', help='Nifty identifier of analyzed template', required=True)
     parser.add_argument('--path', help='Path to XML data', required=True)
+    parser.add_argument('--base_mpuri', help='The BASE_MPURI identifier for the VA', required=True)
     args = vars(parser.parse_args())
 
     if args['mode'] == 'push':
         argo = ArgoCommunicator()
-        argo.post_assessment_results(args['niftyID'], args['path'])
+        argo.post_assessment_results(args['niftyID'], args['path'], args['base_mpuri'])
 
 

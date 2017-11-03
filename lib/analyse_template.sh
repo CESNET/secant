@@ -198,7 +198,7 @@ do
 
 	# Post results
 	logging $TEMPLATE_IDENTIFIER "Post assessment results" "DEBUG"
-	python $LIB_FOLDER_PATH/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+	python $LIB_FOLDER_PATH/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_TO_SAVE_REPORTS/assessment_result.xml --base_mpuri $BASE_MPURI
 
 done
 
