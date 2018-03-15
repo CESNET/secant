@@ -27,6 +27,10 @@ if __name__ == "__main__":
     secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
     url = py_functions.getSettingsFromBashConfFile(secant_conf_path, "IMAGE_LIST_URL")
     dir = py_functions.getSettingsFromBashConfFile(secant_conf_path, "IMAGE_LIST_DIR")
+    state_dir = py_functions.getSettingsFromBashConfFile(secant_conf_path, "STATE_DIR")
+    registered_dir = state_dir + "/registered"
+    if not os.path.isdir(registered_dir):
+        os.mkdir(registered_dir, 755)
 
     images = argo.get_templates_for_assessment(dir)
     logging.info("Secant consumer: Obtained %d templates for assessment" % (len(images)))
@@ -41,3 +45,4 @@ if __name__ == "__main__":
             logging.error("Secant consumer: Registering image list %s failed" % (img_list))
             continue
         logging.debug("Secant consumer: Image list %s has been registered (%s)" % (img_list, debug_info))
+        os.rename("%s/%s" % (dir, img_list), "%s/%s" % (registered_dir, img_list))
