@@ -57,10 +57,9 @@ class ArgoCommunicator(object):
                 attr = msg.get_attr()
                 data = msg.get_data()
                 ackids.append(id)
-        else:
-            logging.debug('[%s] %s: No new requests to pull in %s subscription', 'SECANT', 'DEBUG', self.resultSubscription)
 
         if ackids:
+            logging.debug("[%s] %s: Acknowledging %s" % ('SECANT', 'DEBUG', "'".join(ackids)))
             ams.ack_sub(self.resultSubscription, ackids)
 
         return niftyids
@@ -74,7 +73,7 @@ class ArgoCommunicator(object):
         niftyids = list()
         logging.debug('[%s] %s: Start pulling from the %s subscription', 'SECANT', 'DEBUG', self.requestSubscription)
         pull_subscription = ams.pull_sub(self.requestSubscription, self.nummsgs, True)
-        logging.debug('[%s] %s: Finish pulling from the %s subscription', 'SECANT', 'DEBUG', self.requestSubscription)
+        logging.debug('[%s] %s: Finish pulling from the %s subscription (got %s entry/ies)', 'SECANT', 'DEBUG', self.requestSubscription)
         if pull_subscription:
             for id, msg in pull_subscription:
                 attr = msg.get_attr()
@@ -85,8 +84,6 @@ class ArgoCommunicator(object):
                 image_list_file.close()
                 niftyids.append(os.path.basename(image_list_file.name))
                 ackids.append(id)
-        else:
-            logging.debug('[%s] %s: No new requests to pull', 'SECANT', 'DEBUG')
 
         if ackids:
             ams.ack_sub(self.requestSubscription, ackids)

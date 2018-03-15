@@ -117,7 +117,7 @@ else
             #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")
             BASE_MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v '//CLOUDKEEPER_APPLIANCE_ATTRIBUTES' | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
             ./lib/analyse_template.sh "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" &
-            logging $TEMPLATE_IDENTIFIER "Analysis started." "INFO"
+            logging $TEMPLATE_IDENTIFIER "Analysis started (BASE_MPURI = $BASE_MPURI)." "INFO"
             template_pid=$!
             pids="$pids $template_pid"
             temp_id_with_pid+=( [$template_pid]=$TEMPLATE_IDENTIFIER)
