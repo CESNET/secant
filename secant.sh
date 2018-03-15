@@ -112,11 +112,6 @@ else
     for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"
     do
         if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
-
-            # Check if directory for reports already exist, if not create
-            if [[ ! -e $reports_directory ]]; then
-                mkdir $reports_directory
-            fi
             #TEMPLATE_IDENTIFIER=$TEMPLATE_ID
             TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//CLOUDKEEPER_APPLIANCE_ID")
             #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")

@@ -38,14 +38,13 @@ else
 fi
 
 # Create folder to save the assessment result
-FOLDER_PATH=$reports_directory/$TEMPLATE_IDENTIFIER
+FOLDER_PATH=$STATE_DIR/reports/$TEMPLATE_IDENTIFIER
 if [[ -d $FOLDER_PATH ]] ; then
 	i=1
 	while [[ -d $FOLDER_PATH-$i ]] ; do
        	let i++
   	done
     FOLDER_PATH=$FOLDER_PATH-$i
-    mkdir -p $FOLDER_PATH
 fi
 
 FOLDER_TO_SAVE_REPORTS=
