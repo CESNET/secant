@@ -30,7 +30,6 @@ class ArgoCommunicator(object):
         self.requestSubscription = settings.get('REQUESTS', 'subscription')
         self.resultTopic = settings.get('RESULTS', 'topic')
         self.resultSubscription = settings.get('RESULTS', 'subscription')
-        self.nummsgs = 3
 
     def post_assessment_results(self, niftyId, file_path, base_mpuri):
         ams = ArgoMessagingService(endpoint=self.host, token=self.token, project=self.project)
@@ -72,7 +71,7 @@ class ArgoCommunicator(object):
         ackids = list()
         niftyids = list()
         logging.debug('[%s] %s: Start pulling from the %s subscription', 'SECANT', 'DEBUG', self.requestSubscription)
-        pull_subscription = ams.pull_sub(self.requestSubscription, self.nummsgs, True)
+        pull_subscription = ams.pull_sub(self.requestSubscription, num=1, return_immediately=True)
         logging.debug('[%s] %s: Finish pulling from the %s subscription (got %s entry/ies)', 'SECANT', 'DEBUG', self.requestSubscription)
         if pull_subscription:
             for id, msg in pull_subscription:
