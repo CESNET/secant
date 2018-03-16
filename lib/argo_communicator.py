@@ -72,7 +72,7 @@ class ArgoCommunicator(object):
         niftyids = list()
         logging.debug('[%s] %s: Start pulling from the %s subscription', 'SECANT', 'DEBUG', self.requestSubscription)
         pull_subscription = ams.pull_sub(self.requestSubscription, num=1, return_immediately=True)
-        logging.debug('[%s] %s: Finish pulling from the %s subscription (got %s entry/ies)', 'SECANT', 'DEBUG', self.requestSubscription)
+        logging.debug('[%s] %s: Finish pulling from the %s subscription (got %s record(s))', 'SECANT', 'DEBUG', self.requestSubscription, len(pull_subscription))
         if pull_subscription:
             for id, msg in pull_subscription:
                 attr = msg.get_attr()
