@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 import subprocess
 sys.path.append('../lib/')
@@ -13,14 +14,6 @@ else:
 import py_functions
 
 py_functions.setLogging()
-
-def runcmd(cmd):
-    try:
-        output = subprocess.check_output(cmd)
-    except:
-        raise
-
-    return output
 
 if __name__ == "__main__":
     argo = ArgoCommunicator()
@@ -40,10 +33,12 @@ if __name__ == "__main__":
         #img_list = "https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list"
         logging.debug("Trying to register image list %s" % (img_list))
         img_url = "%s/%s" % (url, img_list)
+        cmd = (["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
         try:
-            debug_info = runcmd(["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
-        except:
-            logging.error("Secant consumer: Registering image list %s failed: %s" % (img_list, debug_info))
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            logging.error("Secant consumer: Registering image list %s failed: %s" % (img_list, e.output))
+            print("Failed to register image %s, check the log." % img_list, file=sys.stderr)
             continue
         logging.debug("Secant consumer: Image list %s has been registered" % (img_list))
         os.rename("%s/%s" % (dir, img_list), "%s/%s" % (registered_dir, img_list))
