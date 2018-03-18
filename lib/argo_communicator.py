@@ -35,11 +35,8 @@ class ArgoCommunicator(object):
         ams = ArgoMessagingService(endpoint=self.host, token=self.token, project=self.project)
         contents = Path(file_path).read_text()
         msg = AmsMessage(data=contents, attributes={'NIFTY_APPLIANCE_ID': niftyId, 'BASE_MPURI': base_mpuri}).dict()
-        try:
-            ret = ams.publish(self.resultTopic, msg)
-            logging.debug('[%s] %s: Results has been successfully pushed.', niftyId, 'DEBUG')
-        except AmsException as e:
-            print e
+        ret = ams.publish(self.resultTopic, msg)
+        logging.debug('[%s] %s: Results has been successfully pushed.', niftyId, 'DEBUG')
 
     def get_assessment_results(self):
         """
