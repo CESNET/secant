@@ -62,27 +62,6 @@ delete_template_and_images(){
     fi
 }
 
-waitall() {
-  local errors=0
-  while :; do
-    for pid in "$@"; do
-      shift
-      if kill -0 "$pid" 2>/dev/null; then
-        set -- "$@" "$pid"
-      elif wait "$pid"; then
-        logging ${temp_id_with_pid[${pid}]} "Analysis completed successfully." "INFO"
-        [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
-      else
-        clean_if_analysis_failed ${temp_id_with_pid[${pid}]}
-        logging ${temp_id_with_pid[${pid}]} "Analysis finished with errors." "ERROR"
-        ((++errors))
-      fi
-    done
-
-    (("$#" > 0)) || break
-   done
- }
-
 #print_ascii_art
 logging "SECANT" "Starting"
 
@@ -93,10 +72,18 @@ logging "SECANT" "Starting"
 #TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "$TEMPLATE_NUMBER,$TEMPLATE_NUMBER p")) # Get first 5 templates ids
 #TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "70,70p")) # Get first 5 templates ids
 
-TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed '1d'))
+onetemplate list > /tmp/templates.$$
+ret=$?
+trap "rm -f /tmp/templates.$$" EXIT
+if [ $ret -ne 0 ]; then
+    logging "SECANT" "Failed to retrieve templates (check authentication)" "ERROR"
+    exit 1
+fi
+TEMPLATES=($(awk '{ print $1 }' /tmp/templates.$$ | sed '1d'))
 
 query='//CLOUDKEEPER_APPLIANCE_MPURI' # attribute which determines that template should be analyzed
 #query='//VMCATCHER_EVENT_DC_IDENTIFIER'
+TEMPLATES_FOR_ANALYSIS=()
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
     NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
@@ -105,24 +92,39 @@ do
     fi
 done
 
-TEMPLATE_IDENTIFIER=$TEMPLATE_ID
 if [ ${#TEMPLATES_FOR_ANALYSIS[@]} -eq 0 ]; then
     logging "SECANT" "No templates for analysis." "INFO"
-else
-    for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"
-    do
-        if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
-            #TEMPLATE_IDENTIFIER=$TEMPLATE_ID
-            TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//CLOUDKEEPER_APPLIANCE_ID")
-            #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")
-            BASE_MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v '//CLOUDKEEPER_APPLIANCE_ATTRIBUTES' | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
-            ./lib/analyse_template.sh "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" &
-            logging $TEMPLATE_IDENTIFIER "Analysis started (BASE_MPURI = $BASE_MPURI)." "INFO"
-            template_pid=$!
-            pids="$pids $template_pid"
-            temp_id_with_pid+=( [$template_pid]=$TEMPLATE_IDENTIFIER)
-        fi
-    done
+    exit 0
 fi
 
-waitall ${pids}
+for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
+    if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
+        #TEMPLATE_IDENTIFIER=$TEMPLATE_ID
+        TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//CLOUDKEEPER_APPLIANCE_ID")
+        #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")
+        BASE_MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v '//CLOUDKEEPER_APPLIANCE_ATTRIBUTES' | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
+        (
+            FOLDER_PATH=$STATE_DIR/reports/$TEMPLATE_IDENTIFIER
+            if [[ -d $FOLDER_PATH ]] ; then
+                i=1
+                while [[ -d $FOLDER_PATH-$i ]]; do
+                    let i++
+                done
+                FOLDER_PATH=$FOLDER_PATH-$i
+            fi
+
+            logging $TEMPLATE_IDENTIFIER "Analysis started (BASE_MPURI = $BASE_MPURI)." "INFO"
+            ./lib/analyse_template.sh "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH"
+            if [ $? -eq 0 ]; then
+                logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI)." "INFO"
+                [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
+                python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
+            else
+                logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
+                clean_if_analysis_failed $TEMPLATE_IDENTIFIER
+            fi
+        ) &
+    fi
+done
+
+wait
