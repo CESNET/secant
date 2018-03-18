@@ -3,6 +3,7 @@
 TEMPLATE_ID=$1
 TEMPLATE_IDENTIFIER=$2
 BASE_MPURI=$3
+FOLDER_PATH=$4
 
 #SECANT_CONF_PATH=${3-$DEFAULT_SECANT_CONF_PATH}
 #source "$SECANT_CONF_PATH"
@@ -35,16 +36,6 @@ else
 	RUN_WITH_CONTEXT_SCRIPT_PATH=lib/run_with_contextualization.sh
 	CTX_ADD_USER=lib/ctx.add_user_secant
 	CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=lib/check_if_cloud_init_run_finished.py
-fi
-
-# Create folder to save the assessment result
-FOLDER_PATH=$STATE_DIR/reports/$TEMPLATE_IDENTIFIER
-if [[ -d $FOLDER_PATH ]] ; then
-	i=1
-	while [[ -d $FOLDER_PATH-$i ]] ; do
-       	let i++
-  	done
-    FOLDER_PATH=$FOLDER_PATH-$i
 fi
 
 FOLDER_TO_SAVE_REPORTS=
@@ -174,11 +165,11 @@ do
 	sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
 	rm -f $FOLDER_TO_SAVE_REPORTS/report
 
-	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+	echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/assessment_result.xml
 	if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-		python assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+		python assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
 	else
-		python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_TO_SAVE_REPORTS/assessment_result.xml
+		python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
 	fi
 
 	logging $TEMPLATE_IDENTIFIER "Delete Virtual Machine $VM_ID." "DEBUG"
@@ -194,12 +185,4 @@ do
 				VM_STATE=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
 		done
 	fi
-
-	# Post results
-	logging $TEMPLATE_IDENTIFIER "Post assessment results" "DEBUG"
-	python $LIB_FOLDER_PATH/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_TO_SAVE_REPORTS/assessment_result.xml --base_mpuri $BASE_MPURI
-
 done
-
-
-
