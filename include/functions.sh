@@ -31,3 +31,24 @@ cat << "EOF"
 |_______/    |_______| \______/__/     \__\ |__| \__|     |__|
 EOF
 }
+
+remote_exec()
+{
+    HOST=$1
+    USER=$2
+    CMD=$3
+    IN=$4
+    OUT=$5
+
+    SSH="ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/nulls -o PreferredAuthentications=publickey"
+
+    $SSH ${USER}@${HOST} "$CMD" < $IN > $OUT
+    [ $? -eq 0 ] && return 0
+
+    for u in secant centos ubuntu; do
+        $SSH ${u}@${HOST} "$CMD" < $IN > $OUT
+        [ $? -eq 0 ] && return 0
+    done
+
+    return 1
+}

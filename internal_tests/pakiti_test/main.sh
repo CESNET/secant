@@ -10,6 +10,9 @@ SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
 CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
 source ${CONFIG_DIR}/secant.conf
 
+PAKITI_CLIENT="/opt/pakiti-client/pakiti-client"
+PAKITI_URL=https://pakiti.cesnet.cz/egi/feed/
+
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
     source ../include/functions.sh
@@ -30,44 +33,21 @@ if $SHOULD_SECANT_SKIP_THIS_TEST;
 then
     printf "SKIP" | python reporter.py $TEMPLATE_IDENTIFIER
     logging $TEMPLATE_IDENTIFIER "Skip PAKITI_TEST." "DEBUG"
-else
-    # Remotely run Pakiti client
-    ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
-    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
-    then
-        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey centos@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
-    fi
-
-    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
-    then
-        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey ubuntu@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
-    fi
-
-    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
-    then
-        ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$VM_IP 'bash -s' < pakiti2-client-meta.sh > $FOLDER_PATH/pakiti_test-pkgs.txt
-    fi
-
-    # Check if pakiti-pkg file is empty
-    if [ ! -s $FOLDER_PATH/pakiti_test-pkgs.txt ]
-    then
-            printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
-            logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed, due to empty report file." "ERROR"
-    else
-        sed -i -e 's/host=""/host="'$TEMPLATE_IDENTIFIER'"/g' $FOLDER_PATH/pakiti_test-pkgs.txt
-        ./pakiti2-client-meta-proxy.sh < $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt 2>&1
-
-        if [ "$?" -eq "0" ];
-        then
-            cat $FOLDER_PATH/pakiti_test-result.txt | python reporter.py $TEMPLATE_IDENTIFIER
-            if [ "$?" -eq "1" ];
-            then
-                printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
-                logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed, error appeared in reporter." "ERROR"
-            fi
-        else
-            printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
-            logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed while sending data to the Pakiti server!" "ERROR"
-        fi
-    fi
+    exit 0
 fi
+
+remote_exec "$VM_IP" "$LOGIN_AS_USER" "perl - --site=SECANT" "$PAKITI_CLIENT" "$FOLDER_PATH/pakiti_test-pkgs.txt"
+if [ $? -ne 0 ]; then
+    printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
+    logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed to get a list of installed packages from the VM" "ERROR"
+    exit 1
+fi
+
+$PAKITI_CLIENT --url "$PAKITI_URL" --mode=store-and-report --host "$TEMPLATE_IDENTIFIER" --input $FOLDER_PATH/pakiti_test-pkgs.txt
+if [ $? -ne 0 ]; then
+    printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
+    logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed while sending data to the Pakiti server." "ERROR"
+    exit 1
+fi
+
+exit 0
