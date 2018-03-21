@@ -115,14 +115,27 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
 
             logging $TEMPLATE_IDENTIFIER "Analysis started (BASE_MPURI = $BASE_MPURI)." "INFO"
             analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH"
-            if [ $? -eq 0 ]; then
-                logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI)." "INFO"
-                [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
-                python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
-            else
+            if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
                 clean_if_analysis_failed $TEMPLATE_IDENTIFIER
+                exit 1
             fi
+
+            logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI)." "INFO"
+
+            # Remove white lines from file
+            sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
+            rm -f $FOLDER_TO_SAVE_REPORTS/report
+
+            echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" >> $FOLDER_PATH/assessment_result.xml
+            if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
+                python assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
+            else
+                python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
+            fi
+
+            [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
+            python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
         ) &
     fi
 done
