@@ -43,11 +43,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-$PAKITI_CLIENT --url "$PAKITI_URL" --mode=store-and-report --host "$TEMPLATE_IDENTIFIER" --input $FOLDER_PATH/pakiti_test-pkgs.txt
+$PAKITI_CLIENT --url "$PAKITI_URL" --mode=store-and-report --host "$TEMPLATE_IDENTIFIER" --input $FOLDER_PATH/pakiti_test-pkgs.txt > $FOLDER_PATH/pakiti_test-result.txt
 if [ $? -ne 0 ]; then
     printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
     logging $TEMPLATE_IDENTIFIER "PAKITI_TEST failed while sending data to the Pakiti server." "ERROR"
     exit 1
 fi
+
+cat $FOLDER_PATH/pakiti_test-result.txt | python reporter.py $TEMPLATE_IDENTIFIER
 
 exit 0
