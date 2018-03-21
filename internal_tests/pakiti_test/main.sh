@@ -7,9 +7,6 @@ FOLDER_PATH=$4
 LOGIN_AS_USER=$5
 SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
 
-CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
-source ${CONFIG_DIR}/secant.conf
-
 PAKITI_CLIENT="/opt/pakiti-client/pakiti-client"
 PAKITI_URL=https://pakiti.cesnet.cz/egi/feed/
 

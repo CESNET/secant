@@ -1,14 +1,8 @@
 import re
-import fileinput
 from lxml import etree
 import sys
-import logging
-sys.path.append('../../include/')
-import py_functions
 
 template_id = sys.argv[1]
-py_functions.setLogging()
-logging.debug('[%s] %s: Start SSH_AUTH_TEST reporter.', template_id, 'DEBUG')
 ssh_auth_test =  etree.Element('SSH_AUTH_TEST')
 
 if len(sys.argv) == 3:

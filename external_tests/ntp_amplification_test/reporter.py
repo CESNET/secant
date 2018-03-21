@@ -1,16 +1,9 @@
 import re
-import fileinput
 import sys
 from lxml import etree
-import logging
-sys.path.append('../../include/')
-import py_functions
 
 template_id = sys.argv[1]
 
-py_functions.setLogging()
-
-logging.debug('[%s] %s: Start NTP_AMPLIFICATION_TEST reporter.', template_id, 'DEBUG')
 ntp_amplification_test = etree.Element('NTP_AMPLIFICATION_TEST')
 
 if len(sys.argv) == 3:

@@ -1,12 +1,7 @@
-import re, sys, os, fileinput, logging
+import re, sys, os
 from lxml import etree
 
 template_id = sys.argv[1]
-
-sys.path.append('../../include/')
-import py_functions
-
-py_functions.setLogging()
 
 pakiti =  etree.Element('PAKITI_TEST')
 pakiti_data= sys.stdin.readlines()
@@ -21,7 +16,6 @@ elif pakiti_data[0] == 'FAIL':
 elif pakiti_data[0] == 'SKIP':
     pakiti.set('status', 'SKIP')
 else:
-    logging.debug('[%s] %s: Start PAKITI_TEST reporter.', template_id, 'DEBUG')
     for line in pakiti_data:
         if line[:2] == "OK":
             pakiti.text = "No vulnerable packages."

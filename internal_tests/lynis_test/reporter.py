@@ -1,11 +1,7 @@
-import re, sys, os, fileinput, logging
+import re, sys, os
 from lxml import etree
 
-sys.path.append('../../include/')
-import py_functions
-
 template_id = sys.argv[1]
-py_functions.setLogging()
 lynis = etree.Element('LYNIS_TEST')
 
 lynis_data = sys.stdin.readlines()
@@ -43,7 +39,7 @@ else:
                     test_id.text = warning_text
                     continue
         except ValueError as e:
-            logging.debug('[%s] %s: LYNIS_TEST reporter failed during warnings parsing: %s.', template_id, 'ERROR', str(e))
+            print('[%s] %s: LYNIS_TEST reporter failed during warnings parsing: %s.' % (template_id, 'ERROR', str(e)))
             lynis.set('status', 'FAIL')
             break;
 
@@ -63,8 +59,7 @@ else:
                     test_id.text = suggestion_text
                     continue
         except ValueError as e:
-            logging.debug('[%s] %s: LYNIS_TEST reporter failed during suggestions parsing: %s.', template_id, 'ERROR',
-                          str(e))
+            print('[%s] %s: LYNIS_TEST reporter failed during suggestions parsing: %s.' % (template_id, 'ERROR', str(e)))
             lynis.set('status', 'FAIL')
             break;
 

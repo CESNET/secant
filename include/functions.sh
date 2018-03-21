@@ -4,20 +4,20 @@
 #SECANT_CONF_PATH=${1-$DEFAULT_SECANT_CONF_PATH}
 #source "$SECANT_CONF_PATH"
 
-CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
-source ${CONFIG_DIR}/secant.conf
-
 logging() {
+    local log=$log_file
+    [ -n "$log" ] || log=/dev/stdout
+
     if [[ $3 == "INFO" ]]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] INFO: $2" >> $log_file;
+        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] INFO: $2" >> $log;
     fi
 
     if [[ $3 == "ERROR" ]]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ERROR: $2" >> $log_file;
+        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ERROR: $2" >> $log;
     fi
 
-    if [[ $3 == "DEBUG" ]] && [ $DEBUG = true ]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] DEBUG: $2" >> $log_file;
+    if [[ $3 == "DEBUG" ]] && [ "$DEBUG" = "true" ]; then
+        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] DEBUG: $2" >> $log;
     fi
 }
 
