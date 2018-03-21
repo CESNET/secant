@@ -114,7 +114,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             fi
 
             logging $TEMPLATE_IDENTIFIER "Analysis started (BASE_MPURI = $BASE_MPURI)." "INFO"
-            ./lib/analyse_template.sh "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH"
+            analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH"
             if [ $? -eq 0 ]; then
                 logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI)." "INFO"
                 [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
