@@ -64,12 +64,20 @@ analyse_machine()
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $FOLDER_TO_SAVE_REPORTS/report
     echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
 
-    # Make the needed environment available to the test scripts
-    export log_file
-
     logging $TEMPLATE_IDENTIFIER "Starting external tests..." "DEBUG"
     for filename in $EXTERNAL_TESTS_FOLDER_PATH/*; do
-        (cd $filename && ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS >> $FOLDER_TO_SAVE_REPORTS/report)
+        (
+            cd $filename || exit 1
+            name=$($filename/get_name) || exit 1
+            ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS > $FOLDER_TO_SAVE_REPORTS/TMP || exit 1
+            ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/TMP >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+        )
+        ret=$?
+        rm -f $FOLDER_TO_SAVE_REPORTS/TMP
+        if [ $ret -ne 0 ]; then
+            logging $TEMPLATE_IDENTIFIER "Test $filename failed" "ERROR"
+            exit 1
+        fi
     done
 
     number_of_attempts=0
@@ -94,7 +102,7 @@ analyse_machine()
     if [ -z "$ip_address_for_ssh" ]; then
         logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            (cd $filename && ./main.sh ${ipAddresses[0]} "$VM_ID" "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS" "$LOGIN_AS_USER" "true" >> $FOLDER_TO_SAVE_REPORTS/report)
+            (name=$($filename/get_name) && echo SKIP | ../lib/reporter.py $name >> $FOLDER_TO_SAVE_REPORTS/report)
         done
     else
         LOGIN_AS_USER="root"
@@ -105,7 +113,18 @@ analyse_machine()
         fi
         logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh, login as user: $LOGIN_AS_USER" "DEBUG"
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            (cd $filename && ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS $LOGIN_AS_USER >> $FOLDER_TO_SAVE_REPORTS/report)
+            (
+                cd $filename || exit 1
+                name=$($filename/get_name) || exit 1
+                ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS $LOGIN_AS_USER > $FOLDER_TO_SAVE_REPORTS/TMP || exit 1
+                ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/TMP >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            )
+            ret=$?
+            rm -f $FOLDER_TO_SAVE_REPORTS/TMP
+            if [ $ret -ne 0 ]; then
+                logging $TEMPLATE_IDENTIFIER "Test $filename failed" "ERROR"
+                exit 1
+            fi
         done
     fi
 
@@ -212,8 +231,7 @@ analyse_template()
 
         analyse_machine "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "${ipAddresses[@]}"
         if [ $? -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Machine analysis failed, exiting" "ERROR"
-            exit 1
+            logging $TEMPLATE_IDENTIFIER "Machine analysis didn't succeed" "ERROR"
         fi
 
         logging $TEMPLATE_IDENTIFIER "Delete Virtual Machine $VM_ID." "DEBUG"

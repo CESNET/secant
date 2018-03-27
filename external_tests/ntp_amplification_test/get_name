@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo ntp_amplification_test

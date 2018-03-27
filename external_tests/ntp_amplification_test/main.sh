@@ -7,7 +7,6 @@ IP=$1
 VM_ID=$2
 TEMPLATE_IDENTIFIER=$3
 FOLDER_PATH=$4
-SHOULD_SECANT_SKIP_THIS_TEST=${5-false}
 
 CURRENT_DIRECTORY=${PWD##*/}
 if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
@@ -20,21 +19,16 @@ else
     fi
 fi
 
-if $SHOULD_SECANT_SKIP_THIS_TEST;
-then
-  python reporter.py $TEMPLATE_IDENTIFIER "SKIP"
-  logging $TEMPLATE_IDENTIFIER "Skip NTP_AMPLIFICATION_TEST." "DEBUG"
-else
-  ntpdc -n -c monlist "$IP" &> $FOLDER_PATH/ntp_output.txt
-  if [ "$?" -eq "1" ]; then
-    python reporter.py $TEMPLATE_IDENTIFIER "FAIL"
-    logging $TEMPLATE_IDENTIFIER "NTP_AMPLIFICATION_TEST failed due to error in  command!" "ERROR" "FAIL"
-  else
-    cat $FOLDER_PATH/ntp_output.txt | python reporter.py $TEMPLATE_IDENTIFIER
-    if [ "$?" -eq "1" ];
-    then
-        python reporter.py $TEMPLATE_IDENTIFIER "FAIL"
-        logging $TEMPLATE_IDENTIFIER "NTP_AMPLIFICATION_TEST failed, error appeared in reporter." "ERROR"
+ntpdc -n -c monlist "$IP" > $FOLDER_PATH/ntp_output.txt
+if [ $? -ne 0 ]; then
+    # we should better check with nmap (or consult its previous run)
+    grep -q 'ntpdc: read: Connection refused' $FOLDER_PATH/ntp_stderr
+    if [ $? -eq 0 ]; then
+       echo OK
+       echo "The ntpd port isn't open"
+       exit 0
     fi
-  fi
+    exit 1
 fi
+
+./generate_report.py < $FOLDER_PATH/ntp_output.txt
