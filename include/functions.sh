@@ -68,7 +68,7 @@ analyse_machine()
     for filename in $EXTERNAL_TESTS_FOLDER_PATH/*; do
         (
             cd $filename || exit 1
-            name=$($filename/get_name) || exit 1
+            name=$(./get_name) || exit 1
             ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS > $FOLDER_TO_SAVE_REPORTS/TMP || exit 1
             ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/TMP >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
         )
@@ -115,7 +115,7 @@ analyse_machine()
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
             (
                 cd $filename || exit 1
-                name=$($filename/get_name) || exit 1
+                name=$(./get_name) || exit 1
                 ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS $LOGIN_AS_USER > $FOLDER_TO_SAVE_REPORTS/TMP || exit 1
                 ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/TMP >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
             )
