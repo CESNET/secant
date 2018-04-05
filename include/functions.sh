@@ -53,6 +53,34 @@ remote_exec()
     return 1
 }
 
+perform_check()
+{
+    TEMPLATE_IDENTIFIER=$1
+    VM_ID=$2
+    FOLDER_TO_SAVE_REPORTS=$3
+    CHECK_DIR=$4
+    shift 4
+    ipAddresses=("${@}")
+
+    (
+        cd $CHECK_DIR || exit 1
+        name=$(./get_name) || exit 1
+        ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS > $FOLDER_TO_SAVE_REPORTS/"$name".stdout
+        if [ $? -ne 0 ]; then
+            echo CHECK_FAILED | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            exit 1
+        fi
+
+        ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+    )
+    if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Internal error while processing $CHECK_DIR" "ERROR"
+        return 1
+    fi
+
+    return 0
+}
+
 analyse_machine()
 {
     TEMPLATE_IDENTIFIER=$1
@@ -65,19 +93,8 @@ analyse_machine()
     echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
 
     logging $TEMPLATE_IDENTIFIER "Starting external tests..." "DEBUG"
-    for filename in $EXTERNAL_TESTS_FOLDER_PATH/*; do
-        (
-            cd $filename || exit 1
-            name=$(./get_name) || exit 1
-            ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS > $FOLDER_TO_SAVE_REPORTS/TMP || exit 1
-            ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/TMP >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
-        )
-        ret=$?
-        rm -f $FOLDER_TO_SAVE_REPORTS/TMP
-        if [ $ret -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Test $filename failed" "ERROR"
-            exit 1
-        fi
+    for filename in $EXTERNAL_TESTS_FOLDER_PATH/*/; do
+        perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
     done
 
     number_of_attempts=0
@@ -113,22 +130,11 @@ analyse_machine()
         fi
         logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh, login as user: $LOGIN_AS_USER" "DEBUG"
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            (
-                cd $filename || exit 1
-                name=$(./get_name) || exit 1
-                ./main.sh $ip_address_for_ssh $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS $LOGIN_AS_USER > $FOLDER_TO_SAVE_REPORTS/TMP || exit 1
-                ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/TMP >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
-            )
-            ret=$?
-            rm -f $FOLDER_TO_SAVE_REPORTS/TMP
-            if [ $ret -ne 0 ]; then
-                logging $TEMPLATE_IDENTIFIER "Test $filename failed" "ERROR"
-                exit 1
-            fi
+            perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
         done
     fi
 
-    echo "<DATE>$(date +%s)</DATE>" >> $FOLDER_TO_SAVE_REPORTS/report
+#    echo "<DATE>$(date +%s)</DATE>" >> $FOLDER_TO_SAVE_REPORTS/report
     echo "</SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
 }
 
@@ -191,7 +197,7 @@ analyse_template()
             logging $TEMPLATE_IDENTIFIER "Template successfully instantiated, VM_ID: $VM_ID" "DEBUG"
         else
             logging $TEMPLATE_IDENTIFIER "$VM_ID." "ERROR"
-            exit 1
+            return 1
         fi
 
         lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
