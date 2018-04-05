@@ -1,17 +1,5 @@
 #!/usr/bin/env bash
 
-TEMPLATE_NUMBER=$1
-CURRENT_DIRECTORY=${PWD##*/}
-if [[ "$CURRENT_DIRECTORY" != "secant" ]] ; then
-	echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] ERROR: Please run Secant from the secant directory."
-	exit 0
-fi
-CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
-source ${CONFIG_DIR}/secant.conf
-source include/functions.sh
-
-declare -A temp_id_with_pid
-
 clean_if_analysis_failed() {
     VM_IDS=($(onevm list | awk '{ print $1 }' | sed '1d'))
     for VM_ID in "${VM_IDS[@]}"
@@ -62,7 +50,53 @@ delete_template_and_images(){
     fi
 }
 
-#print_ascii_art
+usage()
+{
+    print_ascii_art
+    echo "usage: $0 [-ht] [-d directory]"
+}
+
+CURRENT_DIRECTORY=${PWD##*/}
+if [[ "$CURRENT_DIRECTORY" != "secant" ]] ; then
+	echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] ERROR: Please run Secant from the secant directory."
+	exit 0
+fi
+
+source include/functions.sh
+
+TEST_RUN="no"
+
+CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+
+source ${CONFIG_DIR}/secant.conf
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -d|--report-dir)
+        REPORT_DIR="$2"
+        shift
+        shift
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        shift
+        ;;
+    -t|--test-run)
+        TEST_RUN="yes"
+        shift
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+[ "$TEST_RUN" = "yes" ] && DELETE_TEMPLATES="no"
+[ -z "$REPORT_DIR" ] && REPORT_DIR="$STATE_DIR/reports"
+
+
 logging "SECANT" "Starting" "INFO"
 
 # Generate user tocken
@@ -104,7 +138,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
         #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")
         BASE_MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v '//CLOUDKEEPER_APPLIANCE_ATTRIBUTES' | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
         (
-            FOLDER_PATH=$STATE_DIR/reports/$TEMPLATE_IDENTIFIER
+            FOLDER_PATH=$REPORT_DIR/$TEMPLATE_IDENTIFIER
             if [[ -d $FOLDER_PATH ]] ; then
                 i=1
                 while [[ -d $FOLDER_PATH-$i ]]; do
@@ -136,7 +170,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             fi
 
             [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
-            python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
+            [ "$TEST_RUN" = "yes" ] || python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
         ) &
     fi
 done
