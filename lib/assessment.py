@@ -37,33 +37,34 @@ def assessment(template_id, report_file, tests_version, base_mpuri):
     version.text = tests_version
     imageID.text = base_mpuri
 
+    report = etree.parse(report_file)
+
     for tests_type in (external_tests_path, internal_tests_path):
         for dir_name in os.listdir(tests_type):
+            test_name = dir_name.upper()
+            if report.find(test_name) is None:
+                continue
+
             check = etree.SubElement(log, "CHECK")
             test_version = etree.SubElement(check, "VERSION")
             test_id = etree.SubElement(check, "TEST_ID")
             description = etree.SubElement(check, "DESCRIPTION")
             test_outcome = etree.SubElement(check, "OUTCOME")
-            test_id.text = dir_name.upper()
+            test_id.text = test_name
             test_version.text = assessment_settings.get(dir_name.upper(), 'Version')
             description.text = assessment_settings.get(dir_name.upper(), 'Description')
 
-            path = tests_type + "/" + dir_name
-            sys.path.append(path)
-            mod = importlib.import_module(dir_name)
-            fail_details = etree.SubElement(check, "DETAILS")
+            details = etree.SubElement(check, "DETAILS")
 
-            test_running_status = py_functions.check_if_test_completed_successfully(test_id.text, report_file)
-            if test_running_status:
-                test_outcome.text = "NA"
-                fail_details.text = test_running_status[0]
-            else:
-                fail_details.text = ';'.join(map(str, mod.evaluateReport(report_file)))
-                if fail_details.text:
-                    test_outcome.text = "FAIL"
-                    total_outcome = True
-                else:
-                    test_outcome.text = "OK"
+            status = report.find(test_name).get("status")
+            test_outcome.text = status
+            if (status == "ERROR"):
+                total_outcome = True
+
+            node = report.find("/" + test_name + "/details")
+            if node is not None:
+                details.text = node.text
+
 
     if total_outcome:
         outcome.text = "FAIL"
@@ -71,7 +72,8 @@ def assessment(template_id, report_file, tests_version, base_mpuri):
         outcome.text = "OK"
 
     date.text = str(time.time())
-    logging.debug('[%s] %s: Assessment completed', template_id, 'DEBUG')
+    # etree should output the XML declaration itself
+    print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
     print etree.tostring(secant,pretty_print=True)
 
 if __name__ == "__main__":
