@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
+
 VM_IP=$1
-VM_ID=$2 # VM ID in OpenNebula
-TEMPLATE_IDENTIFIER=$3
-FOLDER_PATH=$4
-LOGIN_AS_USER=$5
+FOLDER_PATH=$2
+
 SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
 
 # Disable for the moment

@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
 IP=$1
-VM_ID=$2
-TEMPLATE_IDENTIFIER=$3
-FOLDER_PATH=$4
+FOLDER_PATH=$2
 
 [ -n "$FOLDER_PATH" ] || FOLDER_PATH=/tmp
 

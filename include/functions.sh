@@ -65,7 +65,7 @@ perform_check()
     (
         cd $CHECK_DIR || exit 1
         name=$(./get_name) || exit 1
-        ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS > $FOLDER_TO_SAVE_REPORTS/"$name".stdout
+        ./main.sh "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$name".stdout
         if [ $? -ne 0 ]; then
             logging $TEMPLATE_IDENTIFIER "Probe $CHECK_DIR failed to finish correctly" "ERROR"
             echo CHECK_FAILED | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1

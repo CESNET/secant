@@ -1,10 +1,8 @@
 #!/bin/bash
 
 VM_IP=$1
-VM_ID=$2 # VM ID in OpenNebul
+FOLDER_PATH=$2
 TEMPLATE_IDENTIFIER=$3
-FOLDER_PATH=$4
-LOGIN_AS_USER=$5
 
 PAKITI_CLIENT="/opt/pakiti-client/pakiti-client"
 PAKITI_URL=https://pakiti.cesnet.cz/egi/feed/
