@@ -4,6 +4,11 @@
 #SECANT_CONF_PATH=${1-$DEFAULT_SECANT_CONF_PATH}
 #source "$SECANT_CONF_PATH"
 
+SECANT_STATUS_OK="OK"
+SECANT_STATUS_FAILED="ERROR"
+SECANT_STATUS_SKIPPED="SKIPPED"
+SECANT_STATUS_500="INTERNAL_FAILURE"
+
 logging() {
     local log=$log_file
     [ -n "$log" ] || log=/dev/stdout
@@ -68,7 +73,7 @@ perform_check()
         ./main.sh "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$name".stdout
         if [ $? -ne 0 ]; then
             logging $TEMPLATE_IDENTIFIER "Probe $CHECK_DIR failed to finish correctly" "ERROR"
-            echo CHECK_FAILED | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            echo $SECANT_STATUS_500 | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
             # we suppress the errors in probing scripts and don't return error status (so we're more robust)
         else
             ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
@@ -76,7 +81,7 @@ perform_check()
     )
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Internal error while processing $CHECK_DIR" "ERROR"
-        echo CHECK_FAILED | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
+        echo $SECANT_STATUS_500 | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
         return 1
     fi
 
@@ -122,7 +127,7 @@ analyse_machine()
     if [ -z "$ip_address_for_ssh" ]; then
         logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            (name=$($filename/get_name) && echo SKIP | ../lib/reporter.py $name >> $FOLDER_TO_SAVE_REPORTS/report)
+            (name=$($filename/get_name) && echo $SECANT_STATUS_SKIPPED | ../lib/reporter.py $name >> $FOLDER_TO_SAVE_REPORTS/report)
         done
     else
         LOGIN_AS_USER="root"
