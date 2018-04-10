@@ -40,7 +40,7 @@ remote_exec()
     IN=$4
     OUT=$5
 
-    SSH="ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/nulls -o PreferredAuthentications=publickey"
+    SSH="ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=publickey"
 
     $SSH ${USER}@${HOST} "$CMD" < $IN > $OUT
     [ $? -eq 0 ] && return 0
