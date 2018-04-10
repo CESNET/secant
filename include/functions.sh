@@ -67,14 +67,16 @@ perform_check()
         name=$(./get_name) || exit 1
         ./main.sh ${ipAddresses[0]} $VM_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS > $FOLDER_TO_SAVE_REPORTS/"$name".stdout
         if [ $? -ne 0 ]; then
+            logging $TEMPLATE_IDENTIFIER "Probe $CHECK_DIR failed to finish correctly" "ERROR"
             echo CHECK_FAILED | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
-            exit 1
+            # we suppress the errors in probing scripts and don't return error status (so we're more robust)
+        else
+            ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
         fi
-
-        ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
     )
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Internal error while processing $CHECK_DIR" "ERROR"
+        echo CHECK_FAILED | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
         return 1
     fi
 
@@ -95,6 +97,7 @@ analyse_machine()
     logging $TEMPLATE_IDENTIFIER "Starting external tests..." "DEBUG"
     for filename in $EXTERNAL_TESTS_FOLDER_PATH/*/; do
         perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
+        [ $? -eq 0 ] || return 1
     done
 
     number_of_attempts=0
@@ -131,6 +134,7 @@ analyse_machine()
         logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh, login as user: $LOGIN_AS_USER" "DEBUG"
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
             perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
+            [ $? -eq 0 ] || return
         done
     fi
 
@@ -237,7 +241,8 @@ analyse_template()
 
         analyse_machine "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "${ipAddresses[@]}"
         if [ $? -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Machine analysis didn't succeed" "ERROR"
+            logging $TEMPLATE_IDENTIFIER "Machine analysis didn't finish correctly" "ERROR"
+            FAIL=yes
         fi
 
         logging $TEMPLATE_IDENTIFIER "Delete Virtual Machine $VM_ID." "DEBUG"
@@ -253,5 +258,12 @@ analyse_template()
                 VM_STATE=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
             done
         fi
+
+        if [ -z "$FAIL"]; then
+            return 0
+        else
+            return 1
+        fi
+
     done
 }
