@@ -131,8 +131,9 @@ analyse_machine()
         done
     else
         LOGIN_AS_USER="root"
-        ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$ip_address_for_ssh" 2&> /tmp/$TEMPLATE_IDENTIFIER
-        SUGGESTED_USER=$(cat /tmp/$TEMPLATE_IDENTIFIER | grep -i "Please login as the user*" | sed -e 's/Please login as the user \"\(.*\)\" rather than the user \"root\"./\1/')
+        ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$ip_address_for_ssh" 2&> /tmp/ssh_out.$$
+        SUGGESTED_USER=$(cat /tmp/ssh_out.$$ | grep -i "Please login as the user*" | sed -e 's/Please login as the user \"\(.*\)\" rather than the user \"root\"./\1/')
+        rm -f /tmp/ssh_out.$$
         if [ ! -z "$SUGGESTED_USER" ]; then
             LOGIN_AS_USER="$SUGGESTED_USER"
         fi
