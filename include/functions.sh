@@ -228,6 +228,10 @@ analyse_template()
         while IFS= read -r entry; do
             ipAddresses+=( "$entry" )
         done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
+        if [ ${#ipAddresses[*]} -lt 1 ]; then
+            logging $TEMPLATE_IDENTIFIER "The machine hasn't been assigned any IP address, exiting" "ERROR"
+            return 1
+        fi
 
         # Wait 80 seconds befor first test
         sleep 140
