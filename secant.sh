@@ -149,7 +149,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             mkdir -p "$FOLDER_PATH" || exit 1
 
             logging $TEMPLATE_IDENTIFIER "Starting analysis (BASE_MPURI = $BASE_MPURI) template_id == $TEMPLATE_ID." "INFO"
-            analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH" > ${FOLDER_PATH}/analysis_output.stdout 2>${FOLDER_PATH}/analysis_output.stderr
+            analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH" > ${FOLDER_PATH}/analysis_output.stdout
             if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
                 clean_if_analysis_failed $TEMPLATE_IDENTIFIER
