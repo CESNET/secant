@@ -37,7 +37,7 @@ if __name__ == "__main__":
         #img_list = "https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list"
         logging.debug("Secant consumer: Trying to register image list %s" % (img_list))
         img_url = "%s/%s" % (url, img_list)
-        cmd = (["sudo", "-u", "cloudkeeper", "/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
+        cmd = (["/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug"])
         try:
             subprocess.check_call(cmd, stdout=cloudkeeper_log, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
