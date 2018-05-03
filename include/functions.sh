@@ -214,8 +214,14 @@ analyse_template()
         vm_name=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//NAME/text()' -n)
 
         # Wait for Running status
+        beginning=$(date +%s)
         while [ $lcm_state -ne 3 ]
         do
+            now=$(date +%s)
+            if [ $((now - beginning)) -gt $((60 * 30)) ]; then
+                logging $TEMPLATE_IDENTIFIER "VM hasn't switched to the running status within 30 mins, exiting" "ERROR"
+                return 1
+            fi
             sleep 5s
             lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
         done
