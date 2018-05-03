@@ -45,8 +45,8 @@ def setLogging():
     secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
 
     debug = ""
-    with open(secant_conf_path, 'r+') as f:
-        data = mmap.mmap(f.fileno(), 0)
+    with open(secant_conf_path, 'r') as f:
+        data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
         mo = re.search(r'(DEBUG)=((true\b)|(false\b))', data)
         if mo:
             debug = mo.group(2)
