@@ -12,6 +12,9 @@ SECANT_STATUS_500="INTERNAL_FAILURE"
 cloud_init()
 {
     # only ON is supported atm
+    CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+    source ${CONFIG_DIR}/cloud.conf
+
     export ONE_HOST ONE_XMLRPC
 }
 
@@ -267,18 +270,9 @@ analyse_template()
             FAIL=yes
         fi
 
-        logging $TEMPLATE_IDENTIFIER "Delete Virtual Machine $VM_ID." "DEBUG"
-        #onevm delete $VM_ID
         onevm shutdown --hard $VM_ID
-
-        # Wait VM to shutdown before delete image
-        if $RUN_WITH_CONTEXT_SCRIPT; then
-            VM_STATE=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
-            while [[ $VM_STATE -ne 0 ]]
-            do
-                sleep 5s
-                VM_STATE=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
-            done
+        if [ $? -ne 0 ]; then
+            logging $TEMPLATE_IDENTIFIER "Failed to shutdown VM $VM_ID." "ERROR"
         fi
 
         if [ -z "$FAIL"]; then
