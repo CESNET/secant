@@ -14,7 +14,26 @@ clean_if_analysis_failed() {
     done
 }
 
-delete_template_and_images(){
+delete_template_and_images()
+{
+    TEMPLATE_IDENTIFIER=$1
+
+    timeout=$((SECONDS+(5*60)))
+    while true; do
+        if [ $SECONDS -gt $timeout ]; then
+            logging $TEMPLATE_IDENTIFIER "Time-out reached while waiting for the VM to finish before deleting, exiting." "ERROR"
+            return 1
+        fi
+        VM_IDS=($(onevm list | awk '{ print $1 }' | sed '1d'))
+        found="no"
+        for VM_ID in "${VM_IDS[@]}"; do
+            templ_id=$(onevm show $VM_ID -x | xmlstarlet sel -t -v "//TEMPLATE_ID")
+            [ "$templ_id" = "$TEMPLATE_IDENTIFIER" ] && found="yes"
+        done
+        [ "$found" = "no" ] && break
+        sleep 10
+    done
+
 	# Get Template Images
 	query='//DISK/IMAGE/text()'
 	images=()
