@@ -9,6 +9,12 @@ SECANT_STATUS_FAILED="ERROR"
 SECANT_STATUS_SKIPPED="SKIPPED"
 SECANT_STATUS_500="INTERNAL_FAILURE"
 
+cloud_init()
+{
+    # only ON is supported atm
+    export ONE_HOST ONE_XMLRPC
+}
+
 logging() {
     local log=$log_file
     [ -n "$log" ] || log=/dev/stdout

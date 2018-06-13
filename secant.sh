@@ -99,6 +99,8 @@ done
 
 logging "SECANT" "Starting" "INFO"
 
+cloud_init
+
 # Generate user tocken
 #export ONE_XMLRPC=$ONE_XMLRPC
 #oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
