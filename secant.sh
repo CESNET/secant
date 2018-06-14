@@ -43,7 +43,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-[ "$TEST_RUN" = "yes" ] && DELETE_TEMPLATES="no"
 [ -z "$REPORT_DIR" ] && REPORT_DIR="$STATE_DIR/reports"
 
 
