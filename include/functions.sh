@@ -98,18 +98,15 @@ clean_if_analysis_failed() {
 
 logging() {
     local log=$log_file
-    [ -n "$log" ] || log=/dev/stdout
 
-    if [[ $3 == "INFO" ]]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] INFO: $2" >> $log;
+    if [ "$3" == "DEBUG" -a "$DEBUG" != "true" ]; then
+        return 0
     fi
 
-    if [[ $3 == "ERROR" ]]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ERROR: $2" >> $log;
-    fi
-
-    if [[ $3 == "DEBUG" ]] && [ "$DEBUG" = "true" ]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] DEBUG: $2" >> $log;
+    if [ -z "$log" ]; then
+        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ${3}: $2"
+    else
+        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ${3}: $2" >> $log;
     fi
 }
 
