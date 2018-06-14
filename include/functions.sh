@@ -48,7 +48,7 @@ delete_template_and_images()
     done
 
 	# Get Template Images
-	query='//DISK/IMAGE/text()'
+	query='//DISK/IMAGE_ID/text()'
 	images=()
 	while IFS= read -r entry; do
 	  images+=( "$entry" )
