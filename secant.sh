@@ -6,19 +6,18 @@ usage()
     echo "usage: $0 [-ht] [-d directory]"
 }
 
-CURRENT_DIRECTORY=${PWD##*/}
-if [[ "$CURRENT_DIRECTORY" != "secant" ]] ; then
-	echo `date +"%Y-%d-%m %H:%M:%S"` "[SECANT] ERROR: Please run Secant from the secant directory."
-	exit 0
-fi
-
 source include/functions.sh
 
 TEST_RUN="no"
 
 CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
-
 source ${CONFIG_DIR}/secant.conf
+
+CURRENT_DIRECTORY=${PWD##*/}
+if [[ "$CURRENT_DIRECTORY" != "secant" ]] ; then
+	echo "Please run Secant from the secant directory." >&2
+	exit 1
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -45,17 +44,9 @@ done
 
 [ -z "$REPORT_DIR" ] && REPORT_DIR="$STATE_DIR/reports"
 
-
 logging "SECANT" "Starting" "INFO"
 
 cloud_init
-
-# Generate user tocken
-#export ONE_XMLRPC=$ONE_XMLRPC
-#oneuser login secant --cert $CERT_PATH --key $KEY_PATH --x509 --force >/dev/null 2>&1
-
-#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "$TEMPLATE_NUMBER,$TEMPLATE_NUMBER p")) # Get first 5 templates ids
-#TEMPLATES=($(onetemplate list | awk '{ print $1 }' | sed -n "70,70p")) # Get first 5 templates ids
 
 onetemplate list > /tmp/templates.$$
 ret=$?
@@ -66,13 +57,12 @@ if [ $ret -ne 0 ]; then
 fi
 TEMPLATES=($(awk '{ print $1 }' /tmp/templates.$$ | sed '1d'))
 
-query='//CLOUDKEEPER_APPLIANCE_MPURI' # attribute which determines that template should be analyzed
-#query='//VMCATCHER_EVENT_DC_IDENTIFIER'
+query='//CLOUDKEEPER_APPLIANCE_MPURI' # attribute which determines which template should be analyzed
 TEMPLATES_FOR_ANALYSIS=()
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
     NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
-    if [ -n "$NIFTY_ID" ]; then # n - for not empty
+    if [ -n "$NIFTY_ID" ]; then
         TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
     fi
 done
@@ -84,9 +74,7 @@ fi
 
 for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
     if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
-        #TEMPLATE_IDENTIFIER=$TEMPLATE_ID
         TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//CLOUDKEEPER_APPLIANCE_ID")
-        #TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//VMCATCHER_EVENT_DC_IDENTIFIER")
         BASE_MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v '//CLOUDKEEPER_APPLIANCE_ATTRIBUTES' | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
         (
             FOLDER_PATH=$REPORT_DIR/$TEMPLATE_IDENTIFIER
@@ -108,15 +96,10 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
 
             logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI), check ${FOLDER_PATH}/analysis_output.{stdout,stderr} for artifacts." "INFO"
 
-            # Remove white lines from file
             sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
             rm -f $FOLDER_TO_SAVE_REPORTS/report
 
-            if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-                python assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
-            else
-                python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
-            fi
+            python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
 
             [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
             [ "$TEST_RUN" = "yes" ] || python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
