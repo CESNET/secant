@@ -18,6 +18,17 @@ cloud_init()
     export ONE_HOST ONE_XMLRPC
 }
 
+shutdown_vm()
+{
+    VM_ID=$1
+    onevm shutdown --hard $VM_ID
+    if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Failed to shutdown VM $VM_ID." "ERROR"
+    fi
+}
+
+
+
 logging() {
     local log=$log_file
     [ -n "$log" ] || log=/dev/stdout
@@ -219,6 +230,9 @@ analyse_template()
             return 1
         fi
 
+        # make sure VM is put down on exit (regardless how the function finishes)
+        trap "shutdown_vm $VM_ID; trap - RETURN" RETURN
+
         lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
         vm_name=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//NAME/text()' -n)
 
@@ -268,11 +282,6 @@ analyse_template()
         if [ $? -ne 0 ]; then
             logging $TEMPLATE_IDENTIFIER "Machine analysis didn't finish correctly" "ERROR"
             FAIL=yes
-        fi
-
-        onevm shutdown --hard $VM_ID
-        if [ $? -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Failed to shutdown VM $VM_ID." "ERROR"
         fi
 
         if [ -z "$FAIL"]; then
