@@ -6,18 +6,14 @@ usage()
     echo "usage: $0 [-ht] [-d directory]"
 }
 
-source include/functions.sh
-
+# Set some default values
 TEST_RUN="no"
+SECANT_PATH=$(dirname $0)
 
 CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
 source ${CONFIG_DIR}/secant.conf
 
-CURRENT_DIRECTORY=${PWD##*/}
-if [[ "$CURRENT_DIRECTORY" != "secant" ]] ; then
-	echo "Please run Secant from the secant directory." >&2
-	exit 1
-fi
+source ${SECANT_PATH}/include/functions.sh
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -99,10 +95,10 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
             rm -f $FOLDER_TO_SAVE_REPORTS/report
 
-            python lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
+            python ${SECANT_PATH}/lib/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" >> $FOLDER_PATH/assessment_result.xml
 
             [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
-            [ "$TEST_RUN" = "yes" ] || python ./lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
+            [ "$TEST_RUN" = "yes" ] || python ${SECANT_PATH}/lib/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
         ) &
     fi
 done

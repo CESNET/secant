@@ -165,7 +165,7 @@ perform_check()
     )
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Internal error while processing $CHECK_DIR" "ERROR"
-        echo $SECANT_STATUS_500 | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
+        echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
         return 1
     fi
 
@@ -179,6 +179,9 @@ analyse_machine()
     FOLDER_TO_SAVE_REPORTS=$3
     shift 3
     ipAddresses=("${@}")
+
+    EXTERNAL_TESTS_FOLDER_PATH=${SECANT_PATH}/external_tests
+    INTERNAL_TESTS_FOLDER_PATH=${SECANT_PATH}/internal_tests
 
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $FOLDER_TO_SAVE_REPORTS/report
     echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
@@ -211,7 +214,7 @@ analyse_machine()
     if [ -z "$ip_address_for_ssh" ]; then
         logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            (name=$($filename/get_name) && echo $SECANT_STATUS_SKIPPED | ../lib/reporter.py $name >> $FOLDER_TO_SAVE_REPORTS/report)
+            (name=$($filename/get_name) && echo $SECANT_STATUS_SKIPPED | ${SECANT_PATH}/lib/reporter.py $name >> $FOLDER_TO_SAVE_REPORTS/report)
         done
     else
         LOGIN_AS_USER="root"
@@ -239,29 +242,9 @@ analyse_template()
     BASE_MPURI=$3
     FOLDER_PATH=$4
 
-    # Move to secant core (?):
-    # Check from which folder script is running
-    CURRENT_DIRECTORY=${PWD##*/}
-    EXTERNAL_TESTS_FOLDER_PATH=
-    INTERNAL_TESTS_FOLDER_PATH=
-
-    if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-        EXTERNAL_TESTS_FOLDER_PATH=../external_tests
-        INTERNAL_TESTS_FOLDER_PATH=../internal_tests
-        LIB_FOLDER_PATH=""
-        source ../include/functions.sh
-        RUN_WITH_CONTEXT_SCRIPT_PATH=run_with_contextualization.sh
-        CTX_ADD_USER=ctx.add_user_secant
-        CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=check_if_cloud_init_run_finished.py
-    else
-        EXTERNAL_TESTS_FOLDER_PATH=external_tests
-        INTERNAL_TESTS_FOLDER_PATH=internal_tests
-        source include/functions.sh
-        LIB_FOLDER_PATH="lib"
-        RUN_WITH_CONTEXT_SCRIPT_PATH=lib/run_with_contextualization.sh
-        CTX_ADD_USER=lib/ctx.add_user_secant
-        CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=lib/check_if_cloud_init_run_finished.py
-    fi
+    RUN_WITH_CONTEXT_SCRIPT_PATH=${SECANT_PATH}/lib/run_with_contextualization.sh
+    CTX_ADD_USER=${SECANT_PATH}/lib/ctx.add_user_secant
+    CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=${SECANT_PATH}/lib/check_if_cloud_init_run_finished.py
 
     FOLDER_TO_SAVE_REPORTS=
     VM_ID=

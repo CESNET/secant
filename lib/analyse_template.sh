@@ -5,11 +5,9 @@ TEMPLATE_IDENTIFIER=$2
 BASE_MPURI=$3
 FOLDER_PATH=$4
 
-source ../include/functions.sh
+SECANT_PATH=$(dirname $0)/..
+source $SECANT_PATH/include/functions.sh
 
-# Basic configuration
-EXTERNAL_TESTS_FOLDER_PATH=/opt/secant/external_tests
-INTERNAL_TESTS_FOLDER_PATH=/opt/secant/internal_tests
 # Make sure the environment is exposed to the tests
 export DEBUG=true
 
