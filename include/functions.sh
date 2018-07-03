@@ -172,6 +172,34 @@ perform_check()
     return 0
 }
 
+perform_check_20()
+{
+    TEMPLATE_IDENTIFIER=$1
+    VM_ID=$2
+    FOLDER_TO_SAVE_REPORTS=$3
+    PROBE=$4
+    shift 4
+    ipAddresses=("${@}")
+
+    (
+        ${SECANT_PATH}/probes/$PROBE/main.sh "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout
+        if [ $? -ne 0 ]; then
+            logging $TEMPLATE_IDENTIFIER "Probe '$PROBE' failed to finish correctly" "ERROR"
+            echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            # we suppress the errors in probing scripts and don;t return error status
+            exit 0
+        fi
+        ${SECANT_PATH}/lib/reporter.py "$PROBE" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+    )
+    if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Internal error while processing '$PROBE'" "ERROR"
+        echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
+        return 1
+    fi
+
+    return 0
+}
+
 analyse_machine()
 {
     TEMPLATE_IDENTIFIER=$1
@@ -228,6 +256,14 @@ analyse_machine()
         for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
             perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
             [ $? -eq 0 ] || return
+        done
+    fi
+
+    # Run probes 2.0
+    if [ -n "$SECANT_PROBES" ]; then
+        IFS=',' read -ra PROBES <<< "$SECANT_PROBES"
+        for PROBE in "${PROBES[@]}"; do
+            perform_check_20 "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$PROBE" "${ipAddresses[@]}"
         done
     fi
 
