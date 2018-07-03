@@ -58,7 +58,7 @@ def assessment(template_id, report_file, tests_version, base_mpuri):
 
             status = report.find(test_name).get("status")
             test_outcome.text = status
-            if (status == "ERROR"):
+            if (status == "ERROR" or status == "INTERNAL_FAILURE"):
                 total_outcome = True
 
             node = report.find("/" + test_name + "/details")
