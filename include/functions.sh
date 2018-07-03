@@ -185,15 +185,15 @@ perform_check_20()
         ${SECANT_PATH}/probes/$PROBE/main.sh "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout
         if [ $? -ne 0 ]; then
             logging $TEMPLATE_IDENTIFIER "Probe '$PROBE' failed to finish correctly" "ERROR"
-            echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
             # we suppress the errors in probing scripts and don;t return error status
             exit 0
         fi
-        ${SECANT_PATH}/lib/reporter.py "$PROBE" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+        ${SECANT_PATH}/lib/reporter.py "$PROBE" < $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
     )
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Internal error while processing '$PROBE'" "ERROR"
-        echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
+        echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report
         return 1
     fi
 
