@@ -1,0 +1,6 @@
+version: 1.0
+title: Detect services and ports available
+# raw output:
+output: nmap.xml
+description: >
+ The probe detects open ports exposed by the machine.
