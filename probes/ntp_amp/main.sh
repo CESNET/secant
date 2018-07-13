@@ -3,6 +3,8 @@
 IP=$1
 FOLDER_PATH=$2
 
+BASE=$(dirname $0)
+
 ntpdc -n -c monlist "$IP" > $FOLDER_PATH/ntpdc.stdout 2>$FOLDER_PATH/ntpdc.stderr
 if [ $? -ne 0 ]; then
     cat $FOLDER_PATH/ntpdc.stderr
@@ -17,4 +19,4 @@ if [ $? -eq 0 ]; then
    exit 0
 fi
 
-./generate_report.py < $FOLDER_PATH/ntpdc.stdout
+${BASE}/generate_report.py < $FOLDER_PATH/ntpdc.stdout
