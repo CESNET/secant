@@ -4,7 +4,8 @@ VM_IP=$1
 FOLDER_PATH=$2
 
 SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
-
+BASE=$(dirname "$0")
+LIB=${BASE}/../../lib
 # Disable for the moment
 echo SKIP
 
@@ -22,7 +23,7 @@ fi
 if $SHOULD_SECANT_SKIP_THIS_TEST;
 then
     logging $TEMPLATE_IDENTIFIER "Skip LYNIS_TEST." "DEBUG"
-    printf "SKIP" | python reporter.py $TEMPLATE_IDENTIFIER
+    printf "SKIP" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
 else
     scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r $lynis_directory/lynis/ "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
     if [ ! "$?" -eq "0" ];
@@ -38,9 +39,8 @@ else
         then
             LOGIN_AS_USER=ubuntu
         else
-            scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r $lynis_directory/lynis/ secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
-            logging $TEMPLATE_IDENTIFIER "Try to login as user secant" "INFO"
-            if [ "$?" -eq "0" ];
+            scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r /usr/local/lynis/lynis/ secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
+	    if [ "$?" -eq "0" ];
             then
                 LOGIN_AS_USER=secant
                 logging $TEMPLATE_IDENTIFIER "Login as user secant was successful!" "INFO"
@@ -49,17 +49,17 @@ else
     fi
     if [ "$?" -eq "0" ];
     then
-        if ! ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
-            logging $TEMPLATE_IDENTIFIER] "During Lynis testing!" "ERROR"
+        if ! ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
+            logging $TEMPLATE_IDENTIFIER "During Lynis testing!" "ERROR"
         fi
-        cat $FOLDER_PATH/lynis_test.txt | python reporter.py $TEMPLATE_IDENTIFIER
+        cat $FOLDER_PATH/lynis_test.txt | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
         if [ "$?" -eq "1" ];
         then
-            printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
+            printf "FAIL" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
             logging $TEMPLATE_IDENTIFIER "LYNIS_TEST failed, error appeared in reporter." "ERROR"
         fi
     else
-        printf "FAIL" | python reporter.py $TEMPLATE_IDENTIFIER
+        printf "FAIL" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
         logging $TEMPLATE_IDENTIFIER "LYNIS_TEST failed due to unsuccessful scp commmand!" "ERROR"
 
     fi

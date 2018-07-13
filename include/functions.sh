@@ -147,36 +147,6 @@ perform_check()
     TEMPLATE_IDENTIFIER=$1
     VM_ID=$2
     FOLDER_TO_SAVE_REPORTS=$3
-    CHECK_DIR=$4
-    shift 4
-    ipAddresses=("${@}")
-
-    (
-        cd $CHECK_DIR || exit 1
-        name=$(./get_name) || exit 1
-        ./main.sh "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$name".stdout
-        if [ $? -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Probe $CHECK_DIR failed to finish correctly" "ERROR"
-            echo $SECANT_STATUS_500 | ../../lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
-            # we suppress the errors in probing scripts and don't return error status (so we're more robust)
-        else
-            ../../lib/reporter.py "$name" < $FOLDER_TO_SAVE_REPORTS/"$name".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
-        fi
-    )
-    if [ $? -ne 0 ]; then
-        logging $TEMPLATE_IDENTIFIER "Internal error while processing $CHECK_DIR" "ERROR"
-        echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$name" >> $FOLDER_TO_SAVE_REPORTS/report
-        return 1
-    fi
-
-    return 0
-}
-
-perform_check_20()
-{
-    TEMPLATE_IDENTIFIER=$1
-    VM_ID=$2
-    FOLDER_TO_SAVE_REPORTS=$3
     PROBE=$4
     shift 4
     ipAddresses=("${@}")
@@ -208,62 +178,12 @@ analyse_machine()
     shift 3
     ipAddresses=("${@}")
 
-    EXTERNAL_TESTS_FOLDER_PATH=${SECANT_PATH}/external_tests
-    INTERNAL_TESTS_FOLDER_PATH=${SECANT_PATH}/internal_tests
-
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $FOLDER_TO_SAVE_REPORTS/report
     echo "<SECANT>" >> $FOLDER_TO_SAVE_REPORTS/report
-
-    logging $TEMPLATE_IDENTIFIER "Starting external tests..." "DEBUG"
-    for filename in $EXTERNAL_TESTS_FOLDER_PATH/*/; do
-        perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
-        [ $? -eq 0 ] || return 1
-    done
-
-    number_of_attempts=0
-    ip_address_for_ssh=
-    while [ -z "$ip_address_for_ssh" ] && [ $number_of_attempts -lt 15 ]; do
-        ip_address_for_ssh=""
-        for ip in "${ipAddresses[@]}"; do
-            ssh_state=$(nmap $ip -PN -p ssh | egrep -o 'open|closed|filtered')
-            if [ "$ssh_state" == "open" ]; then
-                logging $TEMPLATE_IDENTIFIER "Open SSH port has been successfully detected, IP address: $ip" "DEBUG"
-                ip_address_for_ssh=$ip
-                break;
-            fi
-        done
-        if [ -z "$ip_address_for_ssh" ]; then
-            ((number_of_attempts++))
-            sleep 5s
-        fi
-    done
-
-    #Run internal tests
-    if [ -z "$ip_address_for_ssh" ]; then
-        logging $TEMPLATE_IDENTIFIER "Open SSH port has not been detected, skip internal tests." "DEBUG"
-        for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            (name=$($filename/get_name) && echo $SECANT_STATUS_SKIPPED | ${SECANT_PATH}/lib/reporter.py $name >> $FOLDER_TO_SAVE_REPORTS/report)
-        done
-    else
-        LOGIN_AS_USER="root"
-        ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$ip_address_for_ssh" 2&> /tmp/ssh_out.$$
-        SUGGESTED_USER=$(cat /tmp/ssh_out.$$ | grep -i "Please login as the user*" | sed -e 's/Please login as the user \"\(.*\)\" rather than the user \"root\"./\1/')
-        rm -f /tmp/ssh_out.$$
-        if [ ! -z "$SUGGESTED_USER" ]; then
-            LOGIN_AS_USER="$SUGGESTED_USER"
-        fi
-        logging $TEMPLATE_IDENTIFIER "Starting internal tests... IP: $ip_address_for_ssh, login as user: $LOGIN_AS_USER" "DEBUG"
-        for filename in $INTERNAL_TESTS_FOLDER_PATH/*/; do
-            perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$filename" "${ipAddresses[@]}"
-            [ $? -eq 0 ] || return
-        done
-    fi
-
-    # Run probes 2.0
     if [ -n "$SECANT_PROBES" ]; then
         IFS=',' read -ra PROBES <<< "$SECANT_PROBES"
         for PROBE in "${PROBES[@]}"; do
-            perform_check_20 "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$PROBE" "${ipAddresses[@]}"
+            perform_check "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "$PROBE" "${ipAddresses[@]}"
         done
     fi
 
