@@ -131,9 +131,11 @@ remote_exec()
 
     SSH="ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=publickey"
 
-    $SSH ${USER}@${HOST} "$CMD" < $IN > $OUT
-    [ $? -eq 0 ] && return 0
 
+    if [ -n "$USER" ]; then   
+        $SSH ${USER}@${HOST} "$CMD" < $IN > $OUT
+        [ $? -eq 0 ] && return 0
+    fi
     for u in secant centos ubuntu; do
         $SSH ${u}@${HOST} "$CMD" < $IN > $OUT
         [ $? -eq 0 ] && return 0
