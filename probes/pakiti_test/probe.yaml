@@ -1,0 +1,6 @@
+version: 1.0
+title: Detect software vulnerabilities using Pakiti client
+# output: list of installed packages
+output: pakiti_test-pkgs.txt
+description: >
+ The probe finds the list of installed packages on machine and detects their vulnerabilities.

@@ -1,0 +1,4 @@
+version: 1.0
+title: Detect possibility of NTP Amplification.
+description: >
+ The probe checks if NTP port on UDP is open, and if monlist is enabled.

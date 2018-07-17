@@ -52,7 +52,7 @@ else
         if ! ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
             logging $TEMPLATE_IDENTIFIER "During Lynis testing!" "ERROR"
         fi
-        cat $FOLDER_PATH/lynis_test.txt | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
+        cat $FOLDER_PATH/lynis_test.txt
         if [ "$?" -eq "1" ];
         then
             printf "FAIL" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"

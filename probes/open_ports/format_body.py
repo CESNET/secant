@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 from lxml import etree
-import xml.etree.ElementTree as ET
 import sys
 
 tree = etree.parse(sys.stdin)

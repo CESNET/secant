@@ -1,0 +1,4 @@
+version: 1.0
+title: Detect ssh password-based authentication 
+description: >
+ The probe detects if ssh on machine enables password-based authentication.
