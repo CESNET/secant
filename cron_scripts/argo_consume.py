@@ -5,6 +5,7 @@ import subprocess
 sys.path.append('../lib/')
 from argo_communicator import ArgoCommunicator
 import logging, os
+import tempfile
 
 if os.path.split(os.getcwd())[-1] == 'lib' or os.path.split(os.getcwd())[-1] == 'cron_scripts':
     sys.path.append('../include')
@@ -44,7 +45,8 @@ if __name__ == "__main__":
             logging.error("Secant consumer: Registering image list %s failed: %s" % (img_list, e.output))
             print("Failed to register image %s, check the log." % img_list, file=sys.stderr)
             continue
-        logging.debug("Secant consumer: Image list %s has been registered" % (img_list))
-        os.rename("%s/%s" % (dir, img_list), "%s/%s" % (registered_dir, img_list))
+        reg_list = tempfile.NamedTemporaryFile(prefix='image_list_', delete=False, dir=registered_dir)
+        os.rename("%s/%s" % (dir, img_list), reg_list.name)
+        logging.debug("Secant consumer: Image list %s has been registered as %s" % (img_list, os.path.basename(reg_list.name)))
 
     cloudkeeper_log.close()
