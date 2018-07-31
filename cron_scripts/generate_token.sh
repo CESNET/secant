@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 
+# The script must be run as root.
+
+# TODO: Perhaps we should use different creds for secant and cloudkeeper-one (?)
+
 CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
 source ${CONFIG_DIR}/secant.conf
-export ONE_XMLRPC=$ONE_XMLRPC
 
-ret=$(oneuser login secant --cert "$CERT_PATH" --key "$KEY_PATH" --x509 --force 2>&1)
+ret=$(sudo -u "$SECANT_USER" /opt/secant/lib/get_token.sh 2>&1)
 if [ $? -ne 0 ]; then
     echo $ret
     exit 1
 fi
-cp ~/.one/one_auth ~cloudkeeper-one/.one && (chown cloudkeeper-one ~cloudkeeper-one/.one/one_auth; chmod 0600 ~cloudkeeper-one/.one/one_auth)
+
+SRC_AUTH=$(eval echo "~${SECANT_USER}/.one/one_auth")
+umask 177
+cp $SRC_AUTH ~cloudkeeper-one/.one || exit 1
+chown cloudkeeper-one ~cloudkeeper-one/.one/one_auth || exit 1
+
 #systemctl restart cloudkeeper-one
 /etc/init.d/cloudkeeper-one restart > /dev/null
