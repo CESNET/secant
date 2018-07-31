@@ -157,7 +157,7 @@ perform_check()
         ${SECANT_PATH}/probes/$PROBE/main "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout
         if [ $? -ne 0 ]; then
             logging $TEMPLATE_IDENTIFIER "Probe '$PROBE' failed to finish correctly" "ERROR"
-            echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            (echo $SECANT_STATUS_500; echo "Probe $PROBE failed to finish correctly") | ${SECANT_PATH}/lib/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
             # we suppress the errors in probing scripts and don;t return error status
             exit 0
         fi

@@ -5,63 +5,51 @@ FOLDER_PATH=$2
 
 SHOULD_SECANT_SKIP_THIS_TEST=${6-false}
 BASE=$(dirname "$0")
-LIB=${BASE}/../../lib
-# Disable for the moment
-echo SKIP
-
-CURRENT_DIRECTORY=${PWD##*/}
-if [[ "$CURRENT_DIRECTORY" == "lib" ]] ; then
-    source ../include/functions.sh
-else
-    if [[ "$CURRENT_DIRECTORY" == "secant" ]] ; then
-        source include/functions.sh
-    else
-        source ../../include/functions.sh
-    fi
-fi
+CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+source ${CONFIG_DIR}/probes.conf
+source $BASE/../../include/functions.sh
 
 if $SHOULD_SECANT_SKIP_THIS_TEST;
 then
+    echo "SKIPPED"
+    echo "Lynis test is actually skipped"
     logging $TEMPLATE_IDENTIFIER "Skip LYNIS_TEST." "DEBUG"
-    printf "SKIP" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
 else
-    scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r $lynis_directory/lynis/ "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
-    if [ ! "$?" -eq "0" ];
-    then
-        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r $lynis_directory/lynis/ centos@$VM_IP:/tmp > /tmp/scp.log 2>&1
-    fi
-    if [ "$?" -eq "0" ];
-    then
-        LOGIN_AS_USER=centos
+    if [ -n "$LOGIN_AS_USER" ]; then
+        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
     else
-        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r $lynis_directory/lynis/ ubuntu@$VM_IP:/tmp > /tmp/scp.log 2>&1
-        if [ "$?" -eq "0" ];
-        then
-            LOGIN_AS_USER=ubuntu
-        else
-            scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r /usr/local/lynis/lynis/ secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
-	    if [ "$?" -eq "0" ];
-            then
-                LOGIN_AS_USER=secant
-                logging $TEMPLATE_IDENTIFIER "Login as user secant was successful!" "INFO"
+        if [ "$?" -ne "0" ]; then
+            scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" centos@$VM_IP:/tmp > /tmp/scp.log 2>&1
+            if [ "$?" -eq "0" ]; then
+                LOGIN_AS_USER=centos
+            else
+                scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" ubuntu@$VM_IP:/tmp > /tmp/scp.log 2>&1
+                if [ "$?" -eq "0" ]; then
+                    LOGIN_AS_USER=ubuntu
+                else
+                    scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
+	                if [ "$?" -eq "0" ]; then
+                        LOGIN_AS_USER=secant
+                    fi
+                fi
             fi
         fi
     fi
     if [ "$?" -eq "0" ];
     then
-        if ! ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt; then
+        ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt
+        if [ "$?" -eq "0" ]; then
+            echo "OK"
+            echo "Logged in as user $LOGIN_AS_USER, and lynis test completed"
+            cat $FOLDER_PATH/lynis_test.txt
+        else
             logging $TEMPLATE_IDENTIFIER "During Lynis testing!" "ERROR"
-        fi
-        cat $FOLDER_PATH/lynis_test.txt
-        if [ "$?" -eq "1" ];
-        then
-            printf "FAIL" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
-            logging $TEMPLATE_IDENTIFIER "LYNIS_TEST failed, error appeared in reporter." "ERROR"
+            exit 1
         fi
     else
-        printf "FAIL" | python ${LIB}/reporter.py "$TEMPLATE_IDENTIFIER"
+        echo "SKIPPED"
+        echo "LYNIS_TEST skipped due to unsuccessful scp command!"
         logging $TEMPLATE_IDENTIFIER "LYNIS_TEST failed due to unsuccessful scp commmand!" "ERROR"
-
     fi
     rm -f /tmp/scp.log
 fi

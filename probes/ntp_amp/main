@@ -2,15 +2,20 @@
 
 import sys
 import os
-from subprocess import Popen, PIPE
+import subprocess
 
 dirname = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, dirname+'/../lib/')
 from ports import open_ports
 
-if open_ports(sys.argv[2], 123, 'udp') == False:
-    print("OK")
-    print("NTP port on UDP is not open")
+try:
+    if open_ports(sys.argv[2], 123, 'udp') == False:
+        print("OK")
+        print("NTP port on UDP is not open")
+        sys.exit(0)
+except Exception:
+    print("SKIPPED")
+    print("Skipped due to fail to read nmap result.")
     sys.exit(0)
 
 retValue = subprocess.call([dirname+'/main.sh', sys.argv[1], sys.argv[2], sys.argv[3]])
