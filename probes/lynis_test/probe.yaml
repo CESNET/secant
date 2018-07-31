@@ -1,0 +1,6 @@
+version: 1.0
+title: Detect weaknesses of tools and libraries using the Lynis framework
+# raw output:
+output: lynis_test.txt 
+description: >
+ The probe determine security state of machine by running tests on available tools and libraries.

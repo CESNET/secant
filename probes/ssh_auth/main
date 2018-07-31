@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+
+import sys
+import subprocess
+import os
+
+dirname = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, dirname+'/../lib/')
+from ports import open_ports
+
+if not (open_ports(sys.argv[2], 22, 'tcp')):
+    print('OK')
+    print('SSH port is not open')
+    sys.exit(0)
+
+retValue = subprocess.call([dirname+'/main.sh', sys.argv[1], sys.argv[2], sys.argv[3]])
+sys.exit(retValue)

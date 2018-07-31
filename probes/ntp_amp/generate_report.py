@@ -2,17 +2,16 @@
 
 import re
 import sys
-from lxml import etree
-
-ntp_amplification_test = etree.Element('NTP_AMPLIFICATION_TEST')
 
 stdout_data = sys.stdin.readlines()
 regex = (re.search('remote\saddress\s*port\slocal\saddress\s*count\sm\sver\srstr\savgint\s*lstint', stdout_data[0])) if stdout_data else ""
-if regex:
-    ntp_amplification_test.text = "Monlist response is enabled"
-    print("ERROR")
+if regex: 
+    print('ERROR')
+    print('The machine exposes NTP configuration that can be abused for amplification attacks')
+    print('Monlist response is enabled')
+    sys.exit(0)
 else:
-    ntp_amplification_test.text = "Monlist response is disabled or not available"
-    print("OK")
-
-print (etree.tostring(ntp_amplification_test, pretty_print=True))
+    print('OK')
+    print('NTP port on UDP is open')
+    print('Monlist response is disabled or not available')
+    sys.exit(0)
