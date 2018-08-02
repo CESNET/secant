@@ -4,7 +4,7 @@ import re
 import sys
 
 stdout_data = sys.stdin.readlines()
-regex = (re.search('remote\saddress\s*port\slocal\saddress\s*count\sm\sver\srstr\savgint\s*lstint', stdout_data[0])) if stdout_data else ""
+regex = (re.search('remote\saddress\s*port\slocal\saddress\s*count\sm\sver\srstr\savgint\s*lstint', stdout_data[0])) if stdout_data else None
 if regex: 
     print('ERROR')
     print('The machine exposes NTP configuration that can be abused for amplification attacks')
