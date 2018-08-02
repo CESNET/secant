@@ -1,21 +1,6 @@
-import ConfigParser
 import logging
 import errno,sys,os,re, mmap
 from lxml import etree
-
-class FakeSecHead(object):
-    def __init__(self, fp):
-        self.fp = fp
-        self.sechead = '[asection]\n'
-
-    def readline(self):
-        if self.sechead:
-            try:
-                return self.sechead
-            finally:
-                self.sechead = None
-        else:
-            return self.fp.readline()
 
 def check_if_test_completed_successfully(test_name, report_file):
     report = etree.parse(report_file)
@@ -33,13 +18,13 @@ def check_if_test_completed_successfully(test_name, report_file):
     return return_str
 
 def getSettingsFromBashConfFile(config_file, key):
-    cp = ConfigParser.SafeConfigParser()
-    try:
-        cp.readfp(FakeSecHead(open(config_file)))
-    except IOError as e:
-        raise IOError('Cannot open secant.conf file: ' + os.path.split(os.getcwd())[-1])
-    key = key.lower()
-    return [x[1] for x in cp.items('asection') if x[0] == key][0]
+    with open(config_file) as f:
+        config = {}
+        for line in f:
+            split = line.strip().split(sep='=', maxsplit=1)
+            if len(split) == 2:
+                config[split[0]] = split[1]
+    return config[key]
 
 def setLogging():
     secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
@@ -57,6 +42,3 @@ def setLogging():
         log_level = logging.INFO
 
     logging.basicConfig(format='%(asctime)s %(message)s', filename=getSettingsFromBashConfFile(secant_conf_path, 'log_file'),level=log_level, datefmt='%Y-%m-%d %H:%M:%S')
-
-
-
