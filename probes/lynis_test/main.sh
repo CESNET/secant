@@ -16,18 +16,18 @@ then
     logging $TEMPLATE_IDENTIFIER "Skip LYNIS_TEST." "DEBUG"
 else
     if [ -n "$LOGIN_AS_USER" ]; then
-        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
+        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
     else
         if [ "$?" -ne "0" ]; then
-            scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" centos@$VM_IP:/tmp > /tmp/scp.log 2>&1
+            scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" centos@$VM_IP:/tmp > /tmp/scp.log 2>&1
             if [ "$?" -eq "0" ]; then
                 LOGIN_AS_USER=centos
             else
-                scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" ubuntu@$VM_IP:/tmp > /tmp/scp.log 2>&1
+                scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" ubuntu@$VM_IP:/tmp > /tmp/scp.log 2>&1
                 if [ "$?" -eq "0" ]; then
                     LOGIN_AS_USER=ubuntu
                 else
-                    scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$LYNIS" secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
+                    scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
 	                if [ "$?" -eq "0" ]; then
                         LOGIN_AS_USER=secant
                     fi
