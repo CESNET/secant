@@ -1,0 +1,6 @@
+version: 1.0
+title: Detect weak password on SSH using HYDRA
+# raw output:
+output: hydra.stdout
+description: >
+ The probe trying dictionary attack on machine.
