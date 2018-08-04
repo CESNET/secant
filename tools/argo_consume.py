@@ -2,8 +2,6 @@
 from __future__ import print_function
 import sys
 import subprocess
-sys.path.append('../lib/')
-from argo_communicator import ArgoCommunicator
 import logging, os
 import tempfile
 
@@ -12,6 +10,7 @@ if os.path.split(os.getcwd())[-1] == 'lib' or os.path.split(os.getcwd())[-1] == 
 else:
     sys.path.append('include')
 
+from argo_communicator import ArgoCommunicator
 import py_functions
 
 py_functions.setLogging()

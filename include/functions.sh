@@ -157,15 +157,15 @@ perform_check()
         ${SECANT_PATH}/probes/$PROBE/main "${ipAddresses[0]}" "$FOLDER_TO_SAVE_REPORTS" "$TEMPLATE_IDENTIFIER" > $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout
         if [ $? -ne 0 ]; then
             logging $TEMPLATE_IDENTIFIER "Probe '$PROBE' failed to finish correctly" "ERROR"
-            (echo $SECANT_STATUS_500; echo "Probe $PROBE failed to finish correctly") | ${SECANT_PATH}/lib/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+            (echo $SECANT_STATUS_500; echo "Probe $PROBE failed to finish correctly") | ${SECANT_PATH}/tools/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
             # we suppress the errors in probing scripts and don;t return error status
             exit 0
         fi
-        ${SECANT_PATH}/lib/reporter.py "$PROBE" < $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
+        ${SECANT_PATH}/tools/reporter.py "$PROBE" < $FOLDER_TO_SAVE_REPORTS/"$PROBE".stdout >> $FOLDER_TO_SAVE_REPORTS/report || exit 1
     )
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Internal error while processing '$PROBE'" "ERROR"
-        echo $SECANT_STATUS_500 | ${SECANT_PATH}/lib/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report
+        echo $SECANT_STATUS_500 | ${SECANT_PATH}/tools/reporter.py "$PROBE" >> $FOLDER_TO_SAVE_REPORTS/report
         return 1
     fi
 
@@ -201,7 +201,7 @@ analyse_template()
     FOLDER_PATH=$4
 
     RUN_WITH_CONTEXT_SCRIPT_PATH=${SECANT_PATH}/lib/run_with_contextualization.sh
-    CTX_ADD_USER=${SECANT_PATH}/lib/ctx.add_user_secant
+    CTX_ADD_USER=${SECANT_PATH}/conf/ctx.add_user_secant
     CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=${SECANT_PATH}/lib/check_if_cloud_init_run_finished.py
 
     FOLDER_TO_SAVE_REPORTS=
