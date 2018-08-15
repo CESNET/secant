@@ -259,7 +259,7 @@ analyse_template()
         FAIL=yes
     fi
 
-    if [ -z "$FAIL"]; then
+    if [ -z "$FAIL" ]; then
         return 0
     else
         return 1
