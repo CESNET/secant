@@ -21,7 +21,7 @@ def getSettingsFromBashConfFile(config_file, key):
     with open(config_file) as f:
         config = {}
         for line in f:
-            split = line.strip().split(sep='=', maxsplit=1)
+            split = line.strip().split('=', 1)
             if len(split) == 2:
                 config[split[0]] = split[1]
     return config[key]
