@@ -96,6 +96,10 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             rm -f $FOLDER_TO_SAVE_REPORTS/report
 
             ${SECANT_PATH}/tools/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" "$MESSAGE_ID" >> $FOLDER_PATH/assessment_result.xml
+            if [ $? -ne 0 ]; then
+                logging "$TEMPLATE_ID" "Failed to process the probes outcome, exiting" "ERROR"
+                exit 1
+            fi
 
             [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
             [ "$TEST_RUN" = "yes" ] || python ${SECANT_PATH}/include/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
