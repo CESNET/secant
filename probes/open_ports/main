@@ -7,7 +7,7 @@ BASE=$(dirname $0)
 
 [ -n "$FOLDER_PATH" ] || FOLDER_PATH=/tmp
 
-if ! nmap -oX - -T 4 -n $IP > $FOLDER_PATH/nmap.xml; then
+if ! nmap -P0 -oX - -T 4 -n $IP > $FOLDER_PATH/nmap.xml; then
     exit 1
 fi
 
