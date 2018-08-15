@@ -21,6 +21,8 @@ cloud_init()
 shutdown_vm()
 {
     VM_ID=$1
+
+    logging $TEMPLATE_IDENTIFIER "Shutting down VM $VM_ID." "DEBUG"
     onevm shutdown --hard $VM_ID
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Failed to shutdown VM $VM_ID." "ERROR"
