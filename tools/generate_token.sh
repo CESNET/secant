@@ -7,7 +7,7 @@
 CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
 source ${CONFIG_DIR}/secant.conf
 
-ret=$(sudo -u "$SECANT_USER" /opt/secant/lib/get_token.sh 2>&1)
+ret=$(sudo -u "$SECANT_USER" $SECANT_PATH/tools/get_token.sh 2>&1)
 if [ $? -ne 0 ]; then
     echo $ret
     exit 1
