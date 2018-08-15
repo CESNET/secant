@@ -14,7 +14,6 @@ import subprocess
 dirname = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, dirname+'/../include/')
 probes_path='/../probes/'
-conf_path = dirname + '/../conf/secant.conf'
 from py_functions import getSettingsFromBashConfFile
 
 def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
@@ -31,6 +30,7 @@ def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
     imageID.text = base_mpuri
     messageID.text = message_id
     report = etree.parse(report_file)
+    conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
 
     total_outcomeE = False
     total_outcomeI = False
