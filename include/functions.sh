@@ -200,100 +200,68 @@ analyse_template()
     BASE_MPURI=$3
     FOLDER_PATH=$4
 
-    RUN_WITH_CONTEXT_SCRIPT_PATH=${SECANT_PATH}/lib/run_with_contextualization.sh
     CTX_ADD_USER=${SECANT_PATH}/conf/ctx.add_user_secant
-    CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH=${SECANT_PATH}/lib/check_if_cloud_init_run_finished.py
 
     FOLDER_TO_SAVE_REPORTS=
     VM_ID=
-    for RUN_WITH_CONTEXT_SCRIPT in false #true
+    logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
+    #Folder to save reports and logs during first run
+    FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
+    mkdir -p $FOLDER_TO_SAVE_REPORTS
+    VM_ID=$(onetemplate instantiate $TEMPLATE_ID $CTX_ADD_USER)
+
+    if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
+        VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
+        logging $TEMPLATE_IDENTIFIER "Template successfully instantiated, VM_ID: $VM_ID" "DEBUG"
+    else
+        logging $TEMPLATE_IDENTIFIER "$VM_ID." "ERROR"
+        return 1
+    fi
+
+    # make sure VM is put down on exit (regardless how the function finishes)
+    trap "shutdown_vm $VM_ID; trap - RETURN" RETURN
+
+    lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
+    vm_name=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//NAME/text()' -n)
+
+    # Wait for Running status
+    beginning=$(date +%s)
+    while [ $lcm_state -ne 3 ]
     do
-        if ! $RUN_WITH_CONTEXT_SCRIPT; then
-            logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
-            #Folder to save reports and logs during first run
-            FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
-            mkdir -p $FOLDER_TO_SAVE_REPORTS
-            VM_ID=$(onetemplate instantiate $TEMPLATE_ID $CTX_ADD_USER)
-        else
-            logging $TEMPLATE_IDENTIFIER "Start second run with contextualization script." "DEBUG"
-            #Folder to save reports and logs during second run
-            FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/2
-            mkdir -p $FOLDER_TO_SAVE_REPORTS
-            RETURN_MESSAGE=$(./$RUN_WITH_CONTEXT_SCRIPT_PATH $TEMPLATE_ID $TEMPLATE_IDENTIFIER $FOLDER_TO_SAVE_REPORTS)
-            if [[ "$RETURN_MESSAGE" == "1" ]]; then
-                logging $TEMPLATE_IDENTIFIER "Could not instantiate template with contextualization!" "ERROR"
-                continue
-            fi
-            VM_ID=$RETURN_MESSAGE
-        fi
-
-        if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
-            VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
-            logging $TEMPLATE_IDENTIFIER "Template successfully instantiated, VM_ID: $VM_ID" "DEBUG"
-        else
-            logging $TEMPLATE_IDENTIFIER "$VM_ID." "ERROR"
+        now=$(date +%s)
+        if [ $((now - beginning)) -gt $((60 * 30)) ]; then
+            logging $TEMPLATE_IDENTIFIER "VM hasn't switched to the running status within 30 mins, exiting" "ERROR"
             return 1
         fi
-
-        # make sure VM is put down on exit (regardless how the function finishes)
-        trap "shutdown_vm $VM_ID; trap - RETURN" RETURN
-
+        sleep 5s
         lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
-        vm_name=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//NAME/text()' -n)
-
-        # Wait for Running status
-        beginning=$(date +%s)
-        while [ $lcm_state -ne 3 ]
-        do
-            now=$(date +%s)
-            if [ $((now - beginning)) -gt $((60 * 30)) ]; then
-                logging $TEMPLATE_IDENTIFIER "VM hasn't switched to the running status within 30 mins, exiting" "ERROR"
-                return 1
-            fi
-            sleep 5s
-            lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
-        done
-
-        logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
-
-        # Get IPs
-        query='//NIC/IP/text()'
-        ipAddresses=()
-        while IFS= read -r entry; do
-            ipAddresses+=( "$entry" )
-        done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
-        if [ ${#ipAddresses[*]} -lt 1 ]; then
-            logging $TEMPLATE_IDENTIFIER "The machine hasn't been assigned any IP address, exiting" "ERROR"
-            return 1
-        fi
-
-        # Wait 80 seconds befor first test
-        sleep 140
-
-        if $RUN_WITH_CONTEXT_SCRIPT;
-        then
-            # Wait for contextualization
-            # TODO edit SUGESTED USER instedad root
-            RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey root@${ipAddresses[0]} python - 2>&1)
-            while [[ $RESULT == "1" ]]
-            do
-                sleep 10
-                RESULT=$(cat $CHECK_IF_CLOUD_INIT_RUN_FINISHED_SCRIPT_PATH | ssh -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey root@${ipAddresses[0]} python - 2>&1)
-            done
-            #logging $TEMPLATE_IDENTIFIER "$RESULT" "DEBUG"
-        fi
-
-        analyse_machine "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "${ipAddresses[@]}"
-        if [ $? -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Machine analysis didn't finish correctly" "ERROR"
-            FAIL=yes
-        fi
-
-        if [ -z "$FAIL"]; then
-            return 0
-        else
-            return 1
-        fi
-
     done
+
+    logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
+
+    # Get IPs
+    query='//NIC/IP/text()'
+    ipAddresses=()
+    while IFS= read -r entry; do
+        ipAddresses+=( "$entry" )
+    done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
+    if [ ${#ipAddresses[*]} -lt 1 ]; then
+        logging $TEMPLATE_IDENTIFIER "The machine hasn't been assigned any IP address, exiting" "ERROR"
+        return 1
+    fi
+
+    # Wait 80 seconds befor first test
+    sleep 140
+
+    analyse_machine "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "${ipAddresses[@]}"
+    if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Machine analysis didn't finish correctly" "ERROR"
+        FAIL=yes
+    fi
+
+    if [ -z "$FAIL"]; then
+        return 0
+    else
+        return 1
+    fi
 }
