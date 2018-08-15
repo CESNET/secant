@@ -70,7 +70,7 @@ def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
                 else:
                     details.text = nodeD.text
         else:
-            raise Exception('Probe result not found in report.')
+            raise Exception('Probe result of %s not found in report.' % (probe_name))
 
     if total_outcomeI:
         outcome.text = 'INTERNAL_FAILURE'
