@@ -6,7 +6,7 @@ FOLDER_PATH=$2
 CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
 source ${CONFIG_DIR}/probes.conf
 
-hydra -L $SECANT_PROBE_HYDRA/ser.list -P $SECANT_PROBE_HYDRA/passwd.list -t 8 $IP ssh > $FOLDER_PATH/hydra.stdout 2>$FOLDER_PATH/ssh_passwd.stderr
+hydra -L $SECANT_PROBE_HYDRA/user.list -P $SECANT_PROBE_HYDRA/passwd.list -t 8 -e ns $IP ssh > $FOLDER_PATH/hydra.stdout 2>$FOLDER_PATH/ssh_passwd.stderr
 grep -q "0 valid" $FOLDER_PATH/hydra.stdout
 if [ $? -eq 0 ]; then
     echo OK
