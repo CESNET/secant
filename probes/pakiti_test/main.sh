@@ -28,8 +28,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-result=$(head -n 1 $FOLDER_PATH/pakiti_test-result.txt)
-if [ "$result" = "OK" ]; then
+lines=$(grep -vx OK $FOLDER_PATH/pakiti_test-result.txt | wc -l)
+if [ $lines -eq 0 ]; then
     echo OK
     echo "No tagged vulnerabilities found by Pakiti"
     exit 0
@@ -37,4 +37,4 @@ fi
 
 echo ERROR
 echo "Pakiti detected vulnerable packages"
-tail -n +2 $FOLDER_PATH/pakiti_test-result.txt
+grep -vx OK $FOLDER_PATH/pakiti_test-result.txt
