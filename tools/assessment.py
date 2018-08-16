@@ -11,9 +11,8 @@ import logging
 import yaml
 import subprocess
 
-dirname = os.path.dirname(os.path.realpath(__file__))
-sys.path.insert(0, dirname+'/../include/')
-probes_path='/../probes/'
+secant_path = os.path.dirname(os.path.realpath(__file__)) + "/.."
+sys.path.append(secant_path + "/include")
 from py_functions import getSettingsFromBashConfFile
 
 def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
@@ -46,7 +45,7 @@ def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
             details = etree.SubElement(check, "DETAILS")
             test_id.text = probe_name.upper()
 
-            with open(dirname+'/../probes/'+probe_name+'/probe.yaml') as y:
+            with open(secant_path + '/probes/' + probe_name + '/probe.yaml') as y:
                 data = yaml.load(y)
             test_version.text = str(data['version'])
             description.text = data['title']

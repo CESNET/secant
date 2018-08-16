@@ -2,18 +2,11 @@ from argo_ams_library import ArgoMessagingService, AmsException, AmsMessage, Ams
 import ConfigParser, tempfile, sys, os, logging, argparse
 from pathlib2 import Path
 
-
-if os.getcwd().split('/')[-1] == 'secant':
-    sys.path.append('include')
-    import py_functions
-elif os.getcwd().split('/')[-1] == 'lib' or os.getcwd().split('/')[-1] == 'cron_scripts' or os.getcwd().split('/')[-1] == 'tests':
-    sys.path.append('../include')
-    import py_functions
-    py_functions.setLogging()
+secant_path = os.path.dirname(os.path.realpath(__file__)) + "/.."
+sys.path.append(secant_path + "/include")
+import py_functions
 
 py_functions.setLogging()
-sys.path.append('../lib')
-
 
 class ArgoCommunicator(object):
 

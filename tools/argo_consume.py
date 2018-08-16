@@ -5,13 +5,11 @@ import subprocess
 import logging, os
 import tempfile
 
-if os.path.split(os.getcwd())[-1] == 'lib' or os.path.split(os.getcwd())[-1] == 'cron_scripts':
-    sys.path.append('../include')
-else:
-    sys.path.append('include')
+secant_path = os.path.dirname(os.path.realpath(__file__)) + "/.."
+sys.path.append(secant_path + "/include")
 
-from argo_communicator import ArgoCommunicator
 import py_functions
+from argo_communicator import ArgoCommunicator
 
 py_functions.setLogging()
 
