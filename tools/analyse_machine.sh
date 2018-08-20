@@ -1,11 +1,27 @@
 #!/bin/bash
 
-IPADDRESSES=$1
-TEMPLATE_IDENTIFIER=$2
-VM_ID=$3
-FOLDER_TO_SAVE_REPORTS=$4
+usage() {
+    echo "Script run tests on given machines. More information about tests is in README."
+    echo "Script takes exactly 2 arguments:"
+    printf "\t1. IP addresses separated by commas.\n"
+    printf "\t2. Folder to save report.\n"
+}
 
-source $(dirname $0)/../conf/secant.conf
+if [[ $@ == "--help" ||  $@ == "-h" ]]; then 
+    usage
+    exit 0
+fi
+
+if [ $# -ne 2 ]; then
+    usage
+    exit 1
+fi
+
+IPADDRESSES=$1
+FOLDER_TO_SAVE_REPORTS=$2
+TEMPLATE_IDENTIFIER=1
+VM_ID=1
+
 SECANT_PATH=$(dirname $0)/..
 source $SECANT_PATH/include/functions.sh
 
