@@ -29,7 +29,7 @@ def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
     imageID.text = base_mpuri
     messageID.text = message_id
     report = etree.parse(report_file)
-    conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
+    conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'probes.conf'
 
     total_outcomeE = False
     total_outcomeI = False

@@ -176,6 +176,9 @@ perform_check()
 
 analyse_machine()
 {
+    CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
+    source $CONFIG_DIR/probes.conf
+
     TEMPLATE_IDENTIFIER=$1
     VM_ID=$2
     FOLDER_TO_SAVE_REPORTS=$3
