@@ -14,6 +14,7 @@ CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
 source ${CONFIG_DIR}/secant.conf
 
 source ${SECANT_PATH}/include/functions.sh
+source ${SECANT_PATH}/include/cloud_on.sh
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -44,20 +45,18 @@ logging "SECANT" "Starting" "INFO"
 
 cloud_init
 
-onetemplate list > /tmp/templates.$$
-ret=$?
-trap "rm -f /tmp/templates.$$" EXIT
-if [ $ret -ne 0 ]; then
-    logging "SECANT" "Failed to retrieve templates (check authentication)" "ERROR"
+TEMPLATES=$(cloud_get_template_ids)
+if [ $? -ne 0 ]; then
+    logging "Couldn't get templates identifiers." "ERROR"
+    >&2 echo "ERROR: Couldn't get templates identifiers."
     exit 1
 fi
-TEMPLATES=($(awk '{ print $1 }' /tmp/templates.$$ | sed '1d'))
 
 query='//CLOUDKEEPER_APPLIANCE_MPURI' # attribute which determines which template should be analyzed
 TEMPLATES_FOR_ANALYSIS=()
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
-    NIFTY_ID=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query")
+    NIFTY_ID=$(cloud_template_query "$TEMPLATE_ID" "$query")
     if [ -n "$NIFTY_ID" ]; then
         TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
     fi
@@ -70,8 +69,8 @@ fi
 
 for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
     if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
-        TEMPLATE_IDENTIFIER=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "//CLOUDKEEPER_APPLIANCE_ID")
-        BASE_MPURI=$(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v '//CLOUDKEEPER_APPLIANCE_ATTRIBUTES' | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
+        TEMPLATE_IDENTIFIER=$(cloud_template_query "$TEMPLATE_ID" "//CLOUDKEEPER_APPLIANCE_ID")
+        BASE_MPURI=$(cloud_template_query "$TEMPLATE_ID" "//CLOUDKEEPER_APPLIANCE_ATTRIBUTES" | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
         (
             FOLDER_PATH=$REPORT_DIR/$TEMPLATE_IDENTIFIER
             if [[ -d $FOLDER_PATH ]] ; then
