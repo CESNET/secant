@@ -1,6 +1,9 @@
 version: 1.0
-title: Detect services and ports available
+title: Detect services and ports available om the machine
 # raw output:
 output: nmap.xml
 description: >
- The probe detects open ports exposed by the machine.
+ The probe lists open ports exposed by the machine. The probes doesn't
+ consider any open port as insecure, it's used to check the machine is
+ available over the network and provides a list of services that is used by
+ other probes.

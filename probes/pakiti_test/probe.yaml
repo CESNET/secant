@@ -1,6 +1,9 @@
 version: 1.0
-title: Detect software vulnerabilities using Pakiti client
+title: Detect unpatched software packages
 # output: list of installed packages
 output: pakiti_test-pkgs.txt
 description: >
- The probe finds the list of installed packages on machine and detects their vulnerabilities.
+ The probe uses the EGI Pakiti service to detect packages that haven't been
+ updated. If they expose a vulnerability tagged important for EGI, the probes
+ returns with an error. The machine must enable remote access in order to run
+ the probe.

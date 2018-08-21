@@ -1,4 +1,8 @@
 version: 1.0
-title: Detect possibility of NTP Amplification.
+title: Check the NTP server can't be abused for DDoS amplification attacks.
 description: >
- The probe checks if NTP port on UDP is open, and if monlist is enabled.
+ Certain configurations of the NTP service makes it possible for the attacker
+ to mount an amplification attack that greatly increases the efficiency of the
+ attack. Since the traffic originates from the NTP server it might hit badly
+ the service owner. The probe checks that the risky configuration is not
+ available to the Internet.

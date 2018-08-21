@@ -73,13 +73,13 @@ def assessment(template_id, report_file, tests_version, base_mpuri, message_id):
 
     if total_outcomeI:
         outcome.text = 'INTERNAL_FAILURE'
-        outcome_description.text = 'Test finished unsuccessfully due to internal failure.'
+        outcome_description.text = 'The check failed to finish correctly due to internal failure in Secant.'
     elif total_outcomeE:
         outcome.text = 'FAIL'
-        outcome_description.text = 'Test finished successfully. Machine is exposed to attacks.'
+        outcome_description.text = 'The machine has been found to expose security vulnerabilities.'
     else:
         outcome.text = "OK"
-        outcome_description.text = 'Test finished successfully. Machine is not exposed to attacks.'
+        outcome_description.text = 'The machine has not been found to expose known security vulnerabilities.'
 
     date.text = str(time.time())
     # etree should output the XML declaration itself

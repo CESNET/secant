@@ -1,6 +1,8 @@
 version: 1.0
-title: Detect weak password on SSH using HYDRA
+title: Detect weak passwords available over SSH
 # raw output:
 output: hydra.stdout
 description: >
- The probe trying dictionary attack on machine.
+ The probe performs a dictionary attack over SSH and check a number of
+ combinations of known passwords and usernames. The test resembles malicious
+ activities that are very common on the Internet.

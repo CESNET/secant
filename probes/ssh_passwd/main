@@ -11,18 +11,18 @@ from ports import open_ports
 try:
     if not (open_ports(sys.argv[2], 22, 'tcp')):
         print('OK')
-        print('SSH port is not open')
+        print("The machine doesn't expose an SSH server")
         sys.exit(0)
 except Exception:
     print("SKIPPED")
-    print("Skipped due to fail to read nmap result.")
+    print("Failed to read the results of a required dependency (open_ports).")
     sys.exit(0)
 
 with open(sys.argv[2]+'/ssh_auth.stdout', 'r') as f:
     f = f.readline()
     if f == 'OK\n':
         print('OK')
-        print('SSH doesnt allow password authentication')
+        print("SSH doesn't enable password authentication")
         sys.exit(0)
     
 retValue = subprocess.call([dirname+'/main.sh', sys.argv[1], sys.argv[2], sys.argv[3]])

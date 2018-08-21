@@ -10,7 +10,7 @@ hydra -L $SECANT_PROBE_HYDRA/user.list -P $SECANT_PROBE_HYDRA/passwd.list -t 8 -
 grep -q "0 valid" $FOLDER_PATH/hydra.stdout
 if [ $? -eq 0 ]; then
     echo OK
-    echo Password was not cracked
+    echo No weak password has been detected
     echo Dictionary attack finished successfully with 0 valid passwords found.
     exit 0
 fi
