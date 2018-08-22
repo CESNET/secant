@@ -9,25 +9,7 @@ SECANT_STATUS_FAILED="ERROR"
 SECANT_STATUS_SKIPPED="SKIPPED"
 SECANT_STATUS_500="INTERNAL_FAILURE"
 
-cloud_init()
-{
-    # only ON is supported atm
-    CONFIG_DIR=${SECANT_CONFIG_DIR:-/etc/secant}
-    source ${CONFIG_DIR}/cloud.conf
-
-    export ONE_HOST ONE_XMLRPC
-}
-
-shutdown_vm()
-{
-    VM_ID=$1
-
-    logging $TEMPLATE_IDENTIFIER "Shutting down VM $VM_ID." "DEBUG"
-    onevm shutdown --hard $VM_ID
-    if [ $? -ne 0 ]; then
-        logging $TEMPLATE_IDENTIFIER "Failed to shutdown VM $VM_ID." "ERROR"
-    fi
-}
+source $(dirname $0)/cloud_on.sh
 
 delete_template_and_images()
 {
@@ -39,10 +21,10 @@ delete_template_and_images()
             logging $TEMPLATE_IDENTIFIER "Time-out reached while waiting for the VM to finish before deleting, exiting." "ERROR"
             return 1
         fi
-        VM_IDS=($(onevm list | awk '{ print $1 }' | sed '1d'))
+        VM_IDS=$(cloud_get_vm_ids)
         found="no"
         for VM_ID in "${VM_IDS[@]}"; do
-            templ_id=$(onevm show $VM_ID -x | xmlstarlet sel -t -v "//TEMPLATE_ID")
+            templ_id=$(cloud_vm_query "$VM_ID" "//TEMPLATE_ID")
             [ "$templ_id" = "$TEMPLATE_IDENTIFIER" ] && found="yes"
         done
         [ "$found" = "no" ] && break
@@ -50,15 +32,14 @@ delete_template_and_images()
     done
 
 	# Get Template Images
-	query='//DISK/IMAGE_ID/text()'
 	images=()
 	while IFS= read -r entry; do
 	  images+=( "$entry" )
-	done < <(onetemplate show $TEMPLATE_ID -x | xmlstarlet sel -t -v "$query" -n)
+	done < <($(cloud_template_query "$TEMPLATE_ID" "//DISK/IMAGE_ID/text()"))
 
 	for image_name in "${images[@]}"
 	do
-	    DELETE_IMAGE_RESULT=$(oneimage delete "$image_name")
+	    DELETE_IMAGE_RESULT=$(cloud_delete_image "$image_name")
 	    if [[ ! -n  $DELETE_IMAGE_RESULT ]]
 	    then
 	        logging $TEMPLATE_IDENTIFIER "Image: $image_name successfully deleted." "DEBUG"
@@ -71,7 +52,7 @@ delete_template_and_images()
         fi
 	done
 
-    DELETE_TEMPLATE_RESULT=$(onetemplate delete $TEMPLATE_ID)
+    DELETE_TEMPLATE_RESULT=$(cloud_delete_template "$TEMPLATE_ID")
     if [[ ! -n  $DELETE_TEMPLATE_RESULT ]]
 	then
 	    logging $TEMPLATE_IDENTIFIER "Template: $TEMPLATE_ID successfully deleted." "DEBUG"
@@ -85,14 +66,13 @@ delete_template_and_images()
 }
 
 clean_if_analysis_failed() {
-    VM_IDS=($(onevm list | awk '{ print $1 }' | sed '1d'))
+    VM_IDS=$(cloud_get_vm_ids)
     for VM_ID in "${VM_IDS[@]}"
     do
-        query='//NIFTY_APPLIANCE_ID'
-        NIFTY_ID=$(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query")
+        NIFTY_ID=$(cloud_vm_query $VM_ID "//NIFTY_APPLIANCE_ID" | tr -d '\n')
         if [ -n "$NIFTY_ID" ]; then # n - for not empty
             if [[ $NIFTY_ID == $1 ]]; then
-                onevm shutdown $VM_ID --hard
+                cloud_shutdown_vm "$VM_ID"
             fi
         fi
     done
@@ -213,7 +193,7 @@ analyse_template()
     #Folder to save reports and logs during first run
     FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
     mkdir -p $FOLDER_TO_SAVE_REPORTS
-    VM_ID=$(onetemplate instantiate $TEMPLATE_ID $CTX_ADD_USER)
+    VM_ID=$(cloud_instantiate "$TEMPLATE_ID" "$CTX_ADD_USER")
 
     if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
         VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
@@ -224,10 +204,18 @@ analyse_template()
     fi
 
     # make sure VM is put down on exit (regardless how the function finishes)
-    trap "shutdown_vm $VM_ID; trap - RETURN" RETURN
+    trap "cloud_shutdown_vm "$VM_ID"; trap - RETURN" RETURN
 
-    lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
-    vm_name=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//NAME/text()' -n)
+    lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
+    if [ $? -ne 0 ]; then
+        logging "Couldn't query //LCM_STATE/text() on vm with id $VM_ID."
+        exit 1
+    fi
+    vm_name=$(cloud_vm_query "$VM_ID" "//NAME/text()")
+    if [ $? -ne 0 ]; then
+        logging "Couldn't query //NAME/text() on vm with id $VM_ID."
+        exit 1
+    fi
 
     # Wait for Running status
     beginning=$(date +%s)
@@ -239,17 +227,16 @@ analyse_template()
             return 1
         fi
         sleep 5s
-        lcm_state=$(onevm show $VM_ID -x | xmlstarlet sel -t -v '//LCM_STATE/text()' -n)
+        lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
     done
 
     logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
 
     # Get IPs
-    query='//NIC/IP/text()'
     ipAddresses=()
     while IFS= read -r entry; do
         ipAddresses+=( "$entry" )
-    done < <(onevm show $VM_ID -x | xmlstarlet sel -t -v "$query" -n)
+    done < <($(cloud_vm_query "$VM_ID" "//NIC/IP/text()"))
     if [ ${#ipAddresses[*]} -lt 1 ]; then
         logging $TEMPLATE_IDENTIFIER "The machine hasn't been assigned any IP address, exiting" "ERROR"
         return 1
