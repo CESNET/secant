@@ -21,3 +21,5 @@ chown cloudkeeper-one ~cloudkeeper-one/.one/one_auth || exit 1
 
 #systemctl restart cloudkeeper-one
 /etc/init.d/cloudkeeper-one restart > /dev/null
+
+/etc/init.d/cloudkeeper-one-secant restart > /dev/null
