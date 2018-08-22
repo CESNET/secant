@@ -13,6 +13,21 @@ from argo_communicator import ArgoCommunicator
 
 py_functions.setLogging()
 
+def fail_report(msgId):
+    data = b"""<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<SECANT>
+  <VERSION>1.0</VERSION>
+  <IMAGE_ID/>
+  <DATE>%f</DATE>
+  <OUTCOME>INTERNAL_FAILURE</OUTCOME>
+  <OUTCOME_DESCRIPTION>Cloudkeeper failed to register image.</OUTCOME_DESCRIPTION>
+  <MESSAGEID>%d</MESSAGEID>
+</SECANT>""" % (time.time(), msgId)
+    report_file = tempfile.NamedTemporaryFile(delete=False)
+    report_file.write(data)
+    report_file.close()
+    return report_file.name
+
 if __name__ == "__main__":
     argo = ArgoCommunicator()
     secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
@@ -25,12 +40,12 @@ if __name__ == "__main__":
     if not os.path.isdir(registered_dir):
         os.mkdir(registered_dir, 755)
 
-    images = argo.get_templates_for_assessment(dir)
+    images,msgids = argo.get_templates_for_assessment(dir)
     logging.info("Secant consumer: Obtained %d image list(s) for assessment" % (len(images)))
 
     cloudkeeper_log = open(log_dir + "/cloudkeeper.log", mode="a");
 
-    for img_list in images:
+    for (img_list,msgId) in zip(images,msgids):
         #sudo -u cloudkeeper /opt/cloudkeeper/bin/cloudkeeper --image-lists=https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list --debug
         #img_list = "https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list"
         logging.debug("Secant consumer: Trying to register image list %s" % (img_list))
@@ -39,6 +54,13 @@ if __name__ == "__main__":
         try:
             subprocess.check_call(cmd, stdout=cloudkeeper_log, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
+            report=fail_report(msgId)
+            try:
+                argo.post_assessment_results("", msgId, report, "")
+            except Exception:
+                logging.error("Failed to send fail report.")
+            finally:
+                os.remove(report)
             logging.error("Secant consumer: Registering image list %s failed: %s" % (img_list, e.output))
             print("Failed to register image %s, check the log." % img_list, file=sys.stderr)
             continue
