@@ -9,7 +9,7 @@ SECANT_STATUS_FAILED="ERROR"
 SECANT_STATUS_SKIPPED="SKIPPED"
 SECANT_STATUS_500="INTERNAL_FAILURE"
 
-source $(dirname $0)/cloud_on.sh
+source ${SECANT_PATH}/include/cloud_on.sh
 
 delete_template_and_images()
 {
@@ -193,7 +193,7 @@ analyse_template()
     #Folder to save reports and logs during first run
     FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
     mkdir -p $FOLDER_TO_SAVE_REPORTS
-    VM_ID=$(cloud_instantiate "$TEMPLATE_ID" "$CTX_ADD_USER")
+    VM_ID=$(cloud_start_vm "$TEMPLATE_ID" "$CTX_ADD_USER")
 
     if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
         VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
