@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source ${SECANT_PATH}/include/functions.sh
-
 cloud_init()
 {
     # only ON is supported atm
