@@ -45,7 +45,7 @@ logging "SECANT" "Starting" "INFO"
 
 cloud_init
 
-TEMPLATES=$(cloud_get_template_ids)
+TEMPLATES=($(cloud_get_template_ids))
 if [ $? -ne 0 ]; then
     logging "Couldn't get templates identifiers." "ERROR"
     >&2 echo "ERROR: Couldn't get templates identifiers."
