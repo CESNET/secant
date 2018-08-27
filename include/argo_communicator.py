@@ -68,7 +68,7 @@ class ArgoCommunicator(object):
             for id, msg in pull_subscription:
                 attr = msg.get_attr()
                 data = msg.get_data()
-                msgid = msd.get_msgid()
+                msgid = msg.get_msgid()
                 image_list_file = tempfile.NamedTemporaryFile(prefix='tmp_', delete=False, suffix='.list', dir=img_dir)
                 os.chmod(image_list_file.name, 0o644)
                 image_list_file.write(data)
