@@ -107,7 +107,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
                     logging "Couldn't query MESSAGE ID from template." "ERROR"
                     continue
                 fi
-                python ${SECANT_PATH}/include/argo_communicator.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
+                ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
             fi
         ) &
     fi
