@@ -9,8 +9,6 @@ SECANT_STATUS_FAILED="ERROR"
 SECANT_STATUS_SKIPPED="SKIPPED"
 SECANT_STATUS_500="INTERNAL_FAILURE"
 
-source ${SECANT_PATH}/include/cloud_on.sh
-
 delete_template_and_images()
 {
     TEMPLATE_IDENTIFIER=$1
@@ -21,7 +19,7 @@ delete_template_and_images()
             logging $TEMPLATE_IDENTIFIER "Time-out reached while waiting for the VM to finish before deleting, exiting." "ERROR"
             return 1
         fi
-        VM_IDS=$(cloud_get_vm_ids)
+        VM_IDS=($(cloud_get_vm_ids))
         found="no"
         for VM_ID in "${VM_IDS[@]}"; do
             templ_id=$(cloud_vm_query "$VM_ID" "//TEMPLATE_ID")
@@ -35,7 +33,7 @@ delete_template_and_images()
 	images=()
 	while IFS= read -r entry; do
 	  images+=( "$entry" )
-	done < <($(cloud_template_query "$TEMPLATE_ID" "//DISK/IMAGE_ID/text()"))
+	done < <(cloud_template_query "$TEMPLATE_ID" "//DISK/IMAGE_ID/text()")
 
 	for image_name in "${images[@]}"
 	do
@@ -66,7 +64,7 @@ delete_template_and_images()
 }
 
 clean_if_analysis_failed() {
-    VM_IDS=$(cloud_get_vm_ids)
+    VM_IDS=($(cloud_get_vm_ids))
     for VM_ID in "${VM_IDS[@]}"
     do
         NIFTY_ID=$(cloud_vm_query $VM_ID "//NIFTY_APPLIANCE_ID" | tr -d '\n')
@@ -236,7 +234,7 @@ analyse_template()
     ipAddresses=()
     while IFS= read -r entry; do
         ipAddresses+=( "$entry" )
-    done < <($(cloud_vm_query "$VM_ID" "//NIC/IP/text()"))
+    done < <(cloud_vm_query "$VM_ID" "//NIC/IP/text()")
     if [ ${#ipAddresses[*]} -lt 1 ]; then
         logging $TEMPLATE_IDENTIFIER "The machine hasn't been assigned any IP address, exiting" "ERROR"
         return 1
