@@ -46,10 +46,15 @@ cloud_vm_query()
     QUERY=$2
     CLOUD_QUERY=$(onevm show $ID -x)
     if [ $? -ne 0 ]; then
+        logging "Failed to show details of vm with id $ID." "ERROR"
+        return 1
+    fi
+    VM_RESULT=$(xmlstarlet sel -t -v $QUERY -n <<< "$CLOUD_QUERY")
+    if [ -z "$VM_RESULT" ]; then
         logging "Failed to query $QUERY on vm with id $ID." "ERROR"
         return 1
     fi
-    xmlstarlet sel -t -v $QUERY -n <<< "$CLOUD_QUERY"
+    printf "$VM_RESULT"
 }
 
 cloud_template_query()
@@ -58,10 +63,15 @@ cloud_template_query()
     QUERY=$2
     CLOUD_QUERY=$(onetemplate show $ID -x)
     if [ $? -ne 0 ]; then
-        logging "Failed to query $QUERY on template with id $ID." "ERROR"
+        logging "Failed to show details of template with id $ID." "ERROR"
         return 1
     fi
-    xmlstarlet sel -t -v $QUERY -n <<< "$CLOUD_QUERY"
+    TEMP_RESULT=$(xmlstarlet sel -t -v $QUERY -n <<< "$CLOUD_QUERY")
+    if [ -z "$TEMP_RESULT" ]; then
+        logging "Failed to query $QUERY on vm with id $ID." "ERROR"
+        return 1
+    fi
+    printf "$TEMP_RESULT"
 }
 
 cloud_start_vm()

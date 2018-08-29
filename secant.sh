@@ -57,6 +57,10 @@ TEMPLATES_FOR_ANALYSIS=()
 for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
     NIFTY_ID=$(cloud_template_query "$TEMPLATE_ID" "$query")
+    if [ $? -ne 0 ]; then
+        logging "SECANT" "Failed to query $query on template $TEMPLATE_ID." "ERROR"
+        continue
+    fi
     if [ -n "$NIFTY_ID" ]; then
         TEMPLATES_FOR_ANALYSIS+=($TEMPLATE_ID)
     fi
@@ -70,7 +74,13 @@ fi
 for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
     if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
         TEMPLATE_IDENTIFIER=$(cloud_template_query "$TEMPLATE_ID" "//CLOUDKEEPER_APPLIANCE_ID")
+        if [ $? -ne 0 ]; then
+            continue
+        fi
         BASE_MPURI=$(cloud_template_query "$TEMPLATE_ID" "//CLOUDKEEPER_APPLIANCE_ATTRIBUTES" | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
+        if [ $? -ne 0 ]; then
+            continue
+        fi
         (
             FOLDER_PATH=$REPORT_DIR/$TEMPLATE_IDENTIFIER
             if [[ -d $FOLDER_PATH ]] ; then
@@ -86,7 +96,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH" > ${FOLDER_PATH}/analysis_output.stdout
             if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
-                exit 1
+                continue
             fi
 
             logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI), check ${FOLDER_PATH}/analysis_output.{stdout,stderr} for artifacts." "INFO"
@@ -97,13 +107,13 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             ${SECANT_PATH}/tools/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" "$MESSAGE_ID" >> $FOLDER_PATH/assessment_result.xml
             if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Failed to process the probes outcome, exiting" "ERROR"
-                exit 1
+                continue
             fi
 
             [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
             if [ "$TEST_RUN" = "no" ]; then
                 MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
-                if [ -z "$MESSAGE_ID" ]; then
+                if [ $? -ne 0 ]; then
                     logging "Couldn't query MESSAGE ID from template." "ERROR"
                     continue
                 fi

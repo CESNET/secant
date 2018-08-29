@@ -20,24 +20,33 @@ delete_template_and_images()
             return 1
         fi
         VM_IDS=($(cloud_get_vm_ids))
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
         found="no"
         for VM_ID in "${VM_IDS[@]}"; do
             templ_id=$(cloud_vm_query "$VM_ID" "//TEMPLATE_ID")
+            if [ $? -ne 0 ]; then
+                return 1
+            fi
             [ "$templ_id" = "$TEMPLATE_IDENTIFIER" ] && found="yes"
         done
         [ "$found" = "no" ] && break
         sleep 10
     done
 
-	# Get Template Images
-	images=()
-	while IFS= read -r entry; do
-	  images+=( "$entry" )
-	done < <(cloud_template_query "$TEMPLATE_ID" "//DISK/IMAGE_ID/text()")
+    # Get Template Images
+    images=($(cloud_template_query "$TEMPLATE_ID" "//DISK/IMAGE_ID/text()"))
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
 
 	for image_name in "${images[@]}"
 	do
-	    DELETE_IMAGE_RESULT=$(cloud_delete_image "$image_name")
+        DELETE_IMAGE_RESULT=$(cloud_delete_image "$image_name")
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
 	    if [[ ! -n  $DELETE_IMAGE_RESULT ]]
 	    then
 	        logging $TEMPLATE_IDENTIFIER "Image: $image_name successfully deleted." "DEBUG"
@@ -51,6 +60,9 @@ delete_template_and_images()
 	done
 
     DELETE_TEMPLATE_RESULT=$(cloud_delete_template "$TEMPLATE_ID")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
     if [[ ! -n  $DELETE_TEMPLATE_RESULT ]]
 	then
 	    logging $TEMPLATE_IDENTIFIER "Template: $TEMPLATE_ID successfully deleted." "DEBUG"
@@ -65,12 +77,21 @@ delete_template_and_images()
 
 clean_if_analysis_failed() {
     VM_IDS=($(cloud_get_vm_ids))
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
     for VM_ID in "${VM_IDS[@]}"
     do
         NIFTY_ID=$(cloud_vm_query $VM_ID "//NIFTY_APPLIANCE_ID" | tr -d '\n')
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
         if [ -n "$NIFTY_ID" ]; then # n - for not empty
             if [[ $NIFTY_ID == $1 ]]; then
                 cloud_shutdown_vm "$VM_ID"
+                if [ $? -ne 0 ]; then
+                    return 1
+                fi
             fi
         fi
     done
@@ -192,6 +213,9 @@ analyse_template()
     FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
     mkdir -p $FOLDER_TO_SAVE_REPORTS
     VM_ID=$(cloud_start_vm "$TEMPLATE_ID" "$CTX_ADD_USER")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
 
     if [[ $VM_ID =~ ^VM[[:space:]]ID:[[:space:]][0-9]+$ ]]; then
         VM_ID=$(echo $VM_ID | egrep -o '[0-9]+$')
@@ -206,13 +230,11 @@ analyse_template()
 
     lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
     if [ $? -ne 0 ]; then
-        logging "Couldn't query //LCM_STATE/text() on vm with id $VM_ID."
-        exit 1
+        return 1
     fi
     vm_name=$(cloud_vm_query "$VM_ID" "//NAME/text()")
     if [ $? -ne 0 ]; then
-        logging "Couldn't query //NAME/text() on vm with id $VM_ID."
-        exit 1
+        return 1
     fi
 
     # Wait for Running status
@@ -226,15 +248,18 @@ analyse_template()
         fi
         sleep 5s
         lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
     done
 
     logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
 
     # Get IPs
-    ipAddresses=()
-    while IFS= read -r entry; do
-        ipAddresses+=( "$entry" )
-    done < <(cloud_vm_query "$VM_ID" "//NIC/IP/text()")
+    ipAddresses=($(cloud_vm_query "$VM_ID" "//NIC/IP/text()"))
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
     if [ ${#ipAddresses[*]} -lt 1 ]; then
         logging $TEMPLATE_IDENTIFIER "The machine hasn't been assigned any IP address, exiting" "ERROR"
         return 1
