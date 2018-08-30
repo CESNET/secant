@@ -28,7 +28,7 @@ else
                     LOGIN_AS_USER=ubuntu
                 else
                     scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
-	                if [ "$?" -eq "0" ]; then
+                    if [ "$?" -eq "0" ]; then
                         LOGIN_AS_USER=secant
                     fi
                 fi
