@@ -45,7 +45,7 @@ def createTemplate(msgId, secant_conf_path):
     templates_dest = py_functions.getSettingsFromBashConfFile(secant_conf_path, "CLOUDKEEPER_TEMPLATES_DIR")
     shutil.copyfile(templates+'template.erb', templates_dest+'template.erb')
     shutil.copyfile(templates+'image.erb', templates_dest+'image.erb')
-    os.chmod(templates_dest+'template.erb', 0o660)
+    os.chmod(templates_dest+'template.erb', 0o644)
     with open(templates_dest+'template.erb', 'a') as t:
         t.write('MESSAGEID = "%s"' % msgId)
     return (templates_dest+'template.erb'),(templates_dest+'image.erb')
@@ -71,8 +71,12 @@ def registerTemplate():
     for (img_list,msgId) in zip(images,msgids):
         #sudo -u cloudkeeper /opt/cloudkeeper/bin/cloudkeeper --image-lists=https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list --debug
         #img_list = "https://vmcaster.appdb.egi.eu/store/vappliance/demo.va.public/image.list"
-        logging.debug("Secant consumer: Trying to register image list %s" % (img_list))
-        template, image = createTemplate(msgId, secant_conf_path)
+        logging.debug("Secant consumer: Trying to register image list %s for message %s" % (img_list, msgId))
+        try:
+            template, image = createTemplate(msgId, secant_conf_path)
+        except Exception:
+            logging.error("Secant consumer: Failed to create template with MESSAGE ID %s from image list %s" % (msgId, img_list))
+            continue
         img_url = "%s/%s" % (url, img_list)
         cmd = (["/opt/cloudkeeper/bin/cloudkeeper", "--image-lists=" + img_url, "--debug", "--backend-endpoint=" + cloudkeeper_endpoint])
         try:
