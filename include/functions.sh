@@ -137,10 +137,8 @@ remote_exec()
         $SSH ${USER}@${HOST} "$CMD" < $IN > $OUT
         [ $? -eq 0 ] && return 0
     fi
-    for u in secant centos ubuntu; do
-        $SSH ${u}@${HOST} "$CMD" < $IN > $OUT
-        [ $? -eq 0 ] && return 0
-    done
+    $SSH secant@${HOST} "$CMD" < $IN > $OUT
+    [ $? -eq 0 ] && return 0
 
     return 1
 }

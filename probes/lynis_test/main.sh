@@ -15,30 +15,17 @@ then
     echo "Lynis test is actually skipped"
     logging $TEMPLATE_IDENTIFIER "Skip LYNIS_TEST." "DEBUG"
 else
-    if [ -n "$LOGIN_AS_USER" ]; then
-        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
-    else
-        if [ "$?" -ne "0" ]; then
-            scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" centos@$VM_IP:/tmp > /tmp/scp.log 2>&1
-            if [ "$?" -eq "0" ]; then
-                LOGIN_AS_USER=centos
-            else
-                scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" ubuntu@$VM_IP:/tmp > /tmp/scp.log 2>&1
-                if [ "$?" -eq "0" ]; then
-                    LOGIN_AS_USER=ubuntu
-                else
-                    scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" secant@$VM_IP:/tmp > /tmp/scp.log 2>&1
-                    if [ "$?" -eq "0" ]; then
-                        LOGIN_AS_USER=secant
-                    fi
-                fi
-            fi
-        fi
-    fi
+    LOGIN_AS_USER=secant
+    scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey -r "$SECANT_PROBE_LYNIS" "$LOGIN_AS_USER"@$VM_IP:/tmp > /tmp/scp.log 2>&1
     if [ "$?" -eq "0" ];
     then
-        ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt
-        if [ "$?" -eq "0" ]; then
+        ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s sudo' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt
+        ret=$?
+        if [ $ret -ne 0 ]; then
+            ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey "$LOGIN_AS_USER"@$VM_IP 'bash -s' < ${BASE}/lynis-client.sh > $FOLDER_PATH/lynis_test.txt
+            ret=$?
+        fi
+        if [ $ret -eq 0 ]; then
             echo "OK"
             echo "Logged in as user $LOGIN_AS_USER, and lynis test completed"
             cat $FOLDER_PATH/lynis_test.txt
