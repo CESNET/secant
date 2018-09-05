@@ -16,6 +16,12 @@ source ${CONFIG_DIR}/secant.conf
 source ${SECANT_PATH}/include/functions.sh
 source ${SECANT_PATH}/include/cloud_on.sh
 
+lockdir=$SECANT_LOCK_FILE
+exec 9>$lockdir
+if ! flock -n 9 ; then
+    exit 1
+fi
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
     -d|--report-dir)
