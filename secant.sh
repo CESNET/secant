@@ -116,15 +116,15 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
                 continue
             fi
 
-            [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
             if [ "$TEST_RUN" = "no" ]; then
                 MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
                 if [ $? -ne 0 ]; then
                     logging "Couldn't query MESSAGE ID from template." "ERROR"
-                    continue
+                else
+                    ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
                 fi
-                ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
             fi
+            [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
         ) &
     fi
 done
