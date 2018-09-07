@@ -1,10 +1,6 @@
-chpasswd:
-  list: |
-    root:secant
-    NONE:secant
-  expire: False
+#cloud-config
 users:
   - name: secant
-    passwd: secant
+    sudo: ALL=(ALL) NOPASSWD:ALL
     ssh-authorized-keys:
       -  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCa0TPdMlkfkYD4aFaHbDjbHr5aO7QRU3zfIKzTcVUFrkuhELfynTwHnGVl4V0pbnzMeUuNIBh1Bp9XnU7BeqlNQdKtgZtA7tN8CF4wDmjkkhbogSmIF2tSifW9op0z5X7etdJMhipHnS+oCFgVMSxN4YZlh2WSEEs6X1JshMAelnHl0So8Yx6f7YJs3vKGgtT+FlKwQ1F2DKoFSmc5bX5v1dw2q6VFtDwO2TXsEF1kHHMQNsik/L9yjfIi7houo2minxpdMVMqekCmL6pACFoc1XZHXCO22jevKziU7AYKNrLBcc8KCrYqHSPmm6zJM8xp9/cR3SMH5TIGuydmDMwh
