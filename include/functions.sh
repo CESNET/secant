@@ -16,18 +16,20 @@ delete_template_and_images()
     timeout=$((SECONDS+(5*60)))
     while true; do
         if [ $SECONDS -gt $timeout ]; then
-            logging $TEMPLATE_IDENTIFIER "Time-out reached while waiting for the VM to finish before deleting, exiting." "ERROR"
-            return 1
+            logging $TEMPLATE_IDENTIFIER "Time-out reached while waiting for the VM to finish before deleting, proceeding to clean up the space anyway" "ERROR"
+            break
         fi
         VM_IDS=($(cloud_get_vm_ids))
         if [ $? -ne 0 ]; then
-            return 1
+            logging $TEMPLATE_IDENTIFIER "Failed to get a list of running VMs, proceeding to clean up the space anyway" "ERROR"
+            break
         fi
         found="no"
         for VM_ID in "${VM_IDS[@]}"; do
             templ_id=$(cloud_vm_query "$VM_ID" "//TEMPLATE_ID")
             if [ $? -ne 0 ]; then
-                return 1
+                logging $TEMPLATE_IDENTIFIER "Failed to get the template ID for VM $VM_ID" "WARNING"
+                continue
             fi
             [ "$templ_id" = "$TEMPLATE_IDENTIFIER" ] && found="yes"
         done
