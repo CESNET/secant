@@ -233,8 +233,50 @@ analyse_template()
         return 1
     fi
 
-    # Wait 80 seconds befor first test
-    sleep 140
+    IP="${ipAddresses[0]}"
+    timeout=$((SECONDS+(5*60)))
+    is_ssh=false
+    while true; do
+        if [ $SECONDS -gt $timeout ]; then
+            logging $TEMPLATE_ID "VM is not running or ssh is not opened. Analyse running..." "INFO"
+            break
+        fi
+        nmap -P0 -oG - -T 4 -n $IP | tr -d '\n' | grep -E 'Status: Up.*Ports: 22/open'
+        if [ $? -eq 0 ]; then
+            is_ssh=true
+            break
+        fi
+        nmap -oG - -T 4 -n $IP | tr -d '\n' | grep -E 'Status: Up.*Ports: 22/open'
+        if [ $? -eq 0 ]; then
+            is_ssh=true
+            break
+        fi
+        sleep 10
+    done
+
+    timeout=$((SECONDS+(10*60)))
+    if $is_ssh; then
+        while true; do
+            if [ $SECONDS -gt $timeout ]; then
+                logging $TEMPLATE_ID "Cloud-init status is not 'done'." "ERROR"
+                return 1
+            fi
+            ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP /bin/true
+            if [ $? -ne 0 ]; then
+                logging $TEMPLATE_ID "SSH login with user secant is not working." "ERROR"
+                break
+            fi
+            CLOUD_INIT=$(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP cloud-init status)
+            if [ $? -ne 0 ]; then
+                logging $TEMPLATE_ID "Cloud-init missing on VM. Analyse running..." "INFO"
+                break
+            fi
+            echo $CLOUD_INIT | grep -q 'done'
+            if [ $? -eq 0 ]; then
+                break
+            fi
+        done
+    fi
 
     analyse_machine "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "${ipAddresses[@]}"
     if [ $? -ne 0 ]; then
