@@ -120,7 +120,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             if [ "$TEST_RUN" = "no" ]; then
                 MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
                 if [ $? -ne 0 ]; then
-                    logging "$TEMPLATE_ID" "Couldn't query MESSAGE ID from template." "ERROR"
+                    logging "$TEMPLATE_ID" "Couldn't query MESSAGE ID from template, supposing it doesn't originate from AppDB." "INFO"
                 else
                     ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
                 fi
