@@ -64,7 +64,6 @@ for TEMPLATE_ID in "${TEMPLATES[@]}"
 do
     NIFTY_ID=$(cloud_template_query "$TEMPLATE_ID" "$query")
     if [ $? -ne 0 ]; then
-        logging "SECANT" "Failed to query $query on template $TEMPLATE_ID." "ERROR"
         continue
     fi
     if [ -n "$NIFTY_ID" ]; then
@@ -81,10 +80,12 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
     if [[ $TEMPLATE_ID =~ ^[0-9]+$ ]] ; then
         TEMPLATE_IDENTIFIER=$(cloud_template_query "$TEMPLATE_ID" "//CLOUDKEEPER_APPLIANCE_ID")
         if [ $? -ne 0 ]; then
+            logging "$TEMPLATE_ID" "Failed to query //CLOUDKEEPER_APPLIANCE_ID on template." "ERROR"
             continue
         fi
         BASE_MPURI=$(cloud_template_query "$TEMPLATE_ID" "//CLOUDKEEPER_APPLIANCE_ATTRIBUTES" | base64 -d | jq '.["ad:base_mpuri"]'|sed -e '1,$s/"//g')
         if [ $? -ne 0 ]; then
+            logging "$TEMPLATE_ID" "Failed to query //CLOUDKEEPER_APPLIANCE_ATTRIBUTES on template." "ERROR"
             continue
         fi
         (
@@ -119,7 +120,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             if [ "$TEST_RUN" = "no" ]; then
                 MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
                 if [ $? -ne 0 ]; then
-                    logging "Couldn't query MESSAGE ID from template." "ERROR"
+                    logging "$TEMPLATE_ID" "Couldn't query MESSAGE ID from template." "ERROR"
                 else
                     ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
                 fi

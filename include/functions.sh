@@ -36,8 +36,9 @@ delete_template_and_images()
     done
 
     # Get Template Images
-    images=($(cloud_template_query "$TEMPLATE_ID" "//DISK/IMAGE_ID/text()"))
+    images=($(cloud_template_query "$TEMPLATE_IDENTIFIER" "//DISK/IMAGE_ID/text()"))
     if [ $? -ne 0 ]; then
+        logging "$TEMPLATE_IDENTIFIER" "Failed to query //DISK/IMAGE_ID/text()" "ERROR"
         return 1
     fi
 
@@ -45,56 +46,18 @@ delete_template_and_images()
     do
         DELETE_IMAGE_RESULT=$(cloud_delete_image "$image_name")
         if [ $? -ne 0 ]; then
-            return 1
+            logging $TEMPLATE_IDENTIFIER "Image: $image_name deleting failed." "ERROR"
+            continue
         fi
-        if [[ ! -n  $DELETE_IMAGE_RESULT ]]
-        then
-            logging $TEMPLATE_IDENTIFIER "Image: $image_name successfully deleted." "DEBUG"
-        else
-            CHECK_FOR_IMAGE_MANAGE_ERROR=$(echo $DELETE_IMAGE_RESULT | grep -o "Not authorized to perform MANAGE IMAGE \[.[0-9]*\]")
-            if [[ -n $CHECK_FOR_IMAGE_MANAGE_ERROR ]]
-            then
-                logging $TEMPLATE_IDENTIFIER "Secant user is not authorized to delete image: $(echo $CHECK_FOR_IMAGE_MANAGE_ERROR | grep -o '[0-9]*')." "ERROR"
-            fi
-        fi
+        logging $TEMPLATE_IDENTIFIER "Image: $image_name successfully deleted." "DEBUG"
     done
 
-    DELETE_TEMPLATE_RESULT=$(cloud_delete_template "$TEMPLATE_ID")
+    DELETE_TEMPLATE_RESULT=$(cloud_delete_template "$TEMPLATE_IDENTIFIER")
     if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Template: $TEMPLATE_IDENTIFIER deleting failed." "ERROR"
         return 1
     fi
-    if [[ ! -n  $DELETE_TEMPLATE_RESULT ]]
-    then
-        logging $TEMPLATE_IDENTIFIER "Template: $TEMPLATE_ID successfully deleted." "DEBUG"
-    else
-        CHECK_FOR_TEMPLATE_MANAGE_ERROR=$(echo $DELETE_TEMPLATE_RESULT | grep -o "Not authorized to perform MANAGE TEMPLATE \[.[0-9]*\]")
-        if [[ -n $CHECK_FOR_TEMPLATE_MANAGE_ERROR ]]
-        then
-            logging $TEMPLATE_IDENTIFIER "Secant user is not authorized to delete template: $(echo $CHECK_FOR_TEMPLATE_MANAGE_ERROR | grep -o '[0-9]*')." "ERROR"
-        fi
-    fi
-}
-
-clean_if_analysis_failed() {
-    VM_IDS=($(cloud_get_vm_ids))
-    if [ $? -ne 0 ]; then
-        return 1
-    fi
-    for VM_ID in "${VM_IDS[@]}"
-    do
-        NIFTY_ID=$(cloud_vm_query $VM_ID "//NIFTY_APPLIANCE_ID" | tr -d '\n')
-        if [ $? -ne 0 ]; then
-            return 1
-        fi
-        if [ -n "$NIFTY_ID" ]; then # n - for not empty
-            if [[ $NIFTY_ID == $1 ]]; then
-                cloud_shutdown_vm "$VM_ID"
-                if [ $? -ne 0 ]; then
-                    return 1
-                fi
-            fi
-        fi
-    done
+    logging $TEMPLATE_IDENTIFIER "Template: $TEMPLATE_IDENTIFIER successfully deleted." "DEBUG"
 }
 
 logging() {
@@ -206,12 +169,13 @@ analyse_template()
 
     FOLDER_TO_SAVE_REPORTS=
     VM_ID=
-    logging $TEMPLATE_IDENTIFIER "Start first run without contextualization script." "DEBUG"
+    logging $TEMPLATE_IDENTIFIER "Starting template analysis." "DEBUG"
     #Folder to save reports and logs during first run
     FOLDER_TO_SAVE_REPORTS=$FOLDER_PATH/1
     mkdir -p $FOLDER_TO_SAVE_REPORTS
     VM_ID=$(cloud_start_vm "$TEMPLATE_ID" "$CTX_ADD_USER")
     if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Failed to instantiate template." "ERROR"
         return 1
     fi
 
@@ -224,14 +188,16 @@ analyse_template()
     fi
 
     # make sure VM is put down on exit (regardless how the function finishes)
-    trap "cloud_shutdown_vm "$VM_ID"; trap - RETURN" RETURN
+    trap "logging $TEMPLATE_IDENTIFIER 'Shutting down VM $VM_ID.' 'DEBUG'; cloud_shutdown_vm "$VM_ID"; trap - RETURN" RETURN
 
     lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
     if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Failed to query //LCM_STATE/text() on VM with id $VM_ID" "ERROR"
         return 1
     fi
     vm_name=$(cloud_vm_query "$VM_ID" "//NAME/text()")
     if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Failed to query //NAME/text() on VM with id $VM_ID" "ERROR"
         return 1
     fi
 
@@ -247,6 +213,7 @@ analyse_template()
         sleep 5s
         lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
         if [ $? -ne 0 ]; then
+            logging $TEMPLATE_IDENTIFIER "Failed to query //LCM_STATE/text() on VM with id $VM_ID" "ERROR"
             return 1
         fi
     done
@@ -256,6 +223,7 @@ analyse_template()
     # Get IPs
     ipAddresses=($(cloud_vm_query "$VM_ID" "//NIC/IP/text()"))
     if [ $? -ne 0 ]; then
+        logging $TEMPLATE_IDENTIFIER "Failed to query //NIC/IP/text()" "ERROR"
         return 1
     fi
     if [ ${#ipAddresses[*]} -lt 1 ]; then
@@ -269,12 +237,7 @@ analyse_template()
     analyse_machine "$TEMPLATE_IDENTIFIER" "$VM_ID" "$FOLDER_TO_SAVE_REPORTS" "${ipAddresses[@]}"
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Machine analysis didn't finish correctly" "ERROR"
-        FAIL=yes
-    fi
-
-    if [ -z "$FAIL" ]; then
-        return 0
-    else
         return 1
     fi
+    logging $TEMPLATE_IDENTIFIER "Machine analysis finished correctly" "INFO"
 }
