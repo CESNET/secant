@@ -103,7 +103,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH" > ${FOLDER_PATH}/analysis_output.stdout
             if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
-                continue
+                exit 1
             fi
 
             logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI), check ${FOLDER_PATH}/analysis_output.{stdout,stderr} for artifacts." "INFO"
@@ -114,7 +114,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             ${SECANT_PATH}/tools/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" "$MESSAGE_ID" >> $FOLDER_PATH/assessment_result.xml
             if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Failed to process the probes outcome, exiting" "ERROR"
-                continue
+                exit 1
             fi
 
             if [ "$TEST_RUN" = "no" ]; then
