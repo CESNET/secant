@@ -47,7 +47,7 @@ def createTemplate(msgId, secant_conf_path):
     shutil.copyfile(templates+'image.erb', templates_dest+'image.erb')
     os.chmod(templates_dest+'template.erb', 0o644)
     with open(templates_dest+'template.erb', 'a') as t:
-        t.write('MESSAGEID = "%s"' % msgId)
+        t.write('MESSAGEID = "%s"\n' % msgId)
     return (templates_dest+'template.erb'),(templates_dest+'image.erb')
 
 def registerTemplate():
