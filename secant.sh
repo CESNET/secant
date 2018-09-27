@@ -111,6 +111,12 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
             rm -f $FOLDER_TO_SAVE_REPORTS/report
 
+            MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
+            ret=$?
+            if [ $ret -ne 0 ]; then
+                logging "$TEMPLATE_ID" "Couldn't query MESSAGE ID from template, supposing it doesn't originate from AppDB." "INFO"
+            fi
+
             ${SECANT_PATH}/tools/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" "$MESSAGE_ID" >> $FOLDER_PATH/assessment_result.xml
             if [ $? -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Failed to process the probes outcome, exiting" "ERROR"
@@ -118,10 +124,7 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             fi
 
             if [ "$TEST_RUN" = "no" ]; then
-                MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
-                if [ $? -ne 0 ]; then
-                    logging "$TEMPLATE_ID" "Couldn't query MESSAGE ID from template, supposing it doesn't originate from AppDB." "INFO"
-                else
+                if [ $ret -eq 0 ]; then
                     ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
                 fi
             fi
