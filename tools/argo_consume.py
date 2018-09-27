@@ -98,6 +98,8 @@ def registerTemplate():
         reg_list = tempfile.NamedTemporaryFile(prefix='image_list_', delete=False, dir=registered_dir)
         os.rename("%s/%s" % (dir, img_list), reg_list.name)
         logging.debug("Secant consumer: Image list %s has been registered as %s with message ID %s" % (img_list, os.path.basename(reg_list.name), msgId))
+        if subprocess.call([secant_path + "/tools/cloudkeeper_check.sh", msgId]) == 1:
+            logging.error("Secant consumer: Image list %s with message id %s is not in OpenNebula templates" % (img_list,msgId))
 
     cloudkeeper_log.close()
 
