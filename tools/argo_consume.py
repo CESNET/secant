@@ -6,6 +6,7 @@ import logging, os
 import tempfile
 import yaml
 import shutil
+import time
 
 secant_path = os.path.dirname(os.path.realpath(__file__)) + "/.."
 sys.path.append(secant_path + "/include")
