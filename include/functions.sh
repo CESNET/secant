@@ -70,9 +70,9 @@ logging() {
     fi
 
     if [ -z "$log" ]; then
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ${3}: $2"
+        echo `date +"%Y-%m-%d %H:%M:%S"` "[$1] ${3}: $2"
     else
-        echo `date +"%Y-%d-%m %H:%M:%S"` "[$1] ${3}: $2" >> $log;
+        echo `date +"%Y-%m-%d %H:%M:%S"` "[$1] ${3}: $2" >> $log;
     fi
 }
 

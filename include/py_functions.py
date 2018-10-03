@@ -27,18 +27,13 @@ def getSettingsFromBashConfFile(config_file, key):
     return config[key]
 
 def setLogging():
-    secant_conf_path = os.environ.get('SECANT_CONFIG_DIR', '/etc/secant') + '/' + 'secant.conf'
+    logfile = getSettingsFromBashConfFile('/etc/secant/secant.conf', "log_file")
 
-    debug = ""
-    with open(secant_conf_path, 'r') as f:
-        data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-        mo = re.search(r'(DEBUG)=((true\b)|(false\b))', data)
-        if mo:
-            debug = mo.group(2)
+    logging.basicConfig(format='%(asctime)s [%(filename)s] %(levelname)s: %(message)s', filename=logfile,level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 
-    log_level = logging.DEBUG
-
-    if debug == "false":
-        log_level = logging.INFO
-
-    logging.basicConfig(format='%(asctime)s %(message)s', filename=getSettingsFromBashConfFile(secant_conf_path, 'log_file'),level=log_level, datefmt='%Y-%m-%d %H:%M:%S')
+    console = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s [%(filename)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    console.setFormatter(formatter)
+    console.setLevel(logging.ERROR)
+    if len(logging.getLogger('').handlers) == 1:
+         logging.getLogger('').addHandler(console)

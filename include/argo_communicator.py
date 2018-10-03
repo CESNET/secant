@@ -23,6 +23,7 @@ class ArgoCommunicator(object):
         self.requestSubscription = settings.get('REQUESTS', 'subscription')
         self.resultTopic = settings.get('RESULTS', 'topic')
         self.resultSubscription = settings.get('RESULTS', 'subscription')
+        logging.getLogger('urllib3').setLevel(logging.ERROR)
 
     def post_assessment_results(self, niftyId, msgId, file_path, base_mpuri):
         ams = ArgoMessagingService(endpoint=self.host, token=self.token, project=self.project)
@@ -38,9 +39,9 @@ class ArgoCommunicator(object):
         ams = ArgoMessagingService(endpoint=self.host, token=self.token, project=self.project)
         ackids = list()
         niftyids = list()
-        logging.debug('[%s] %s: Start pulling from the %s subscription', 'SECANT', 'DEBUG', self.resultSubscription)
+        logging.debug('Start pulling from the %s subscription', self.resultSubscription)
         pull_subscription = ams.pull_sub(self.resultSubscription, 10, True)
-        logging.debug('[%s] %s: Finish pulling from the %s subscription', 'SECANT', 'DEBUG', self.resultSubscription)
+        logging.debug('Finish pulling from the %s subscription', self.resultSubscription)
         if pull_subscription:
             for id, msg in pull_subscription:
                 attr = msg.get_attr()
