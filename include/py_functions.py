@@ -28,6 +28,7 @@ def getSettingsFromBashConfFile(config_file, key):
 
 def setLogging():
     logfile = getSettingsFromBashConfFile('/etc/secant/secant.conf', "log_file")
+    loglevel = logging.DEBUG if getSettingsFromBashConfFile('/etc/secant/secant.conf', "DEBUG") == "true" else logging.INFO
 
     logging.basicConfig(format='%(asctime)s [%(filename)s] %(levelname)s: %(message)s', filename=logfile,level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 
