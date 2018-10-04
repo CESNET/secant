@@ -69,10 +69,14 @@ logging() {
         return 0
     fi
 
+    now=`date +"%Y-%m-%d %H:%M:%S"`
     if [ -z "$log" ]; then
-        echo `date +"%Y-%m-%d %H:%M:%S"` "[$1] ${3}: $2"
+        echo "$now [$1] ${3}: $2"
     else
-        echo `date +"%Y-%m-%d %H:%M:%S"` "[$1] ${3}: $2" >> $log;
+        echo "$now [$1] ${3}: $2" >> $log
+        if [ "$3" == "ERROR" ]; then
+            echo "$now [$1] ${3}: $2" >&2
+        fi
     fi
 }
 
