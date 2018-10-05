@@ -259,6 +259,7 @@ analyse_template()
     done
 
     timeout=$((SECONDS+(10*60)))
+    have_cloud_init=true
     if $is_ssh; then
         while true; do
             if [ $SECONDS -gt $timeout ]; then
@@ -270,10 +271,15 @@ analyse_template()
                 logging $TEMPLATE_ID "SSH login with user secant is not working." "ERROR"
                 break
             fi
-            CLOUD_INIT=$(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP cloud-init status)
-            if [ $? -ne 0 ]; then
-                logging $TEMPLATE_ID "Cloud-init missing on VM. Analyse running..." "INFO"
-                break
+            if $have_cloud_init; then
+                CLOUD_INIT=$(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP cloud-init status)
+                if [ $? -ne 0 ]; then
+                    logging $TEMPLATE_ID "Cloud-init missing on VM. Analyse running..." "INFO"
+                    have_cloud_init=false
+                    continue
+                fi
+            else
+                cloud-init_status
             fi
             echo $CLOUD_INIT | grep -q 'done'
             if [ $? -eq 0 ]; then
@@ -288,4 +294,34 @@ analyse_template()
         return 1
     fi
     logging $TEMPLATE_IDENTIFIER "Machine analysis finished correctly" "INFO"
+}
+
+cloud-init_status() {
+    scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP:/var/lib/cloud/data/status.json /tmp/${TEMPLATE_ID}_status.json
+    if [ $? -ne 0 ]; then
+        sleep 10
+        continue
+    else
+        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP:/var/lib/cloud/data/status.json /tmp/${TEMPLATE_ID}_result.json
+        if [ $? -ne 0 ]; then
+            sleep 10
+            continue
+        else
+            ${SECANT_PATH}/tools/cloud-init_status.py /tmp/${TEMPLATE_ID}_status.json
+            ret=$?
+            if [ $ret -eq 0 ]; then
+                CLOUD_INIT="done"
+            fi
+            if [ $ret -eq 1 ]; then
+                sleep 10
+                continue
+            fi
+            if [ $ret -eq 2 ]; then
+                rm /tmp/${TEMPLATE_ID}_status.json /tmp/${TEMPLATE_ID}_result.json
+                logging $TEMPLATE_ID "Cloud-init ended with error." "INFO"
+                break
+            fi
+        fi
+    fi
+    rm /tmp/${TEMPLATE_ID}_status.json /tmp/${TEMPLATE_ID}_result.json 2> /dev/null
 }
