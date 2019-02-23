@@ -100,35 +100,36 @@ for TEMPLATE_ID in "${TEMPLATES_FOR_ANALYSIS[@]}"; do
             mkdir -p "$FOLDER_PATH" || exit 1
 
             logging $TEMPLATE_IDENTIFIER "Starting analysis (BASE_MPURI = $BASE_MPURI) template_id == $TEMPLATE_ID." "INFO"
-            analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH" > ${FOLDER_PATH}/analysis_output.stdout
-            if [ $? -ne 0 ]; then
-                logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
-                exit 1
-            fi
 
             MESSAGE_ID=$(cloud_template_query "$TEMPLATE_ID" "//MESSAGEID")
-            ret=$?
-            if [ $ret -ne 0 ]; then
+            msg_ret=$?
+            if [ $msg_ret -ne 0 ]; then
                 logging "$TEMPLATE_ID" "Couldn't query MESSAGE ID from template, supposing it doesn't originate from AppDB." "INFO"
             fi
 
-            logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI, MESSAGE_ID: $MESSAGE_ID), check ${FOLDER_PATH}/analysis_output.{stdout,stderr} for artifacts." "INFO"
-
-            sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
-            rm -f $FOLDER_TO_SAVE_REPORTS/report
-
-            ${SECANT_PATH}/tools/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" "$MESSAGE_ID" >> $FOLDER_PATH/assessment_result.xml
+	    analyse_template "$TEMPLATE_ID" "$TEMPLATE_IDENTIFIER" "$BASE_MPURI" "$FOLDER_PATH" > ${FOLDER_PATH}/analysis_output.stdout
             if [ $? -ne 0 ]; then
-                logging "$TEMPLATE_ID" "Failed to process the probes outcome, exiting" "ERROR"
-                exit 1
-            fi
+                logging "$TEMPLATE_ID" "Analysis finished with errors (BASE_MPURI = $BASE_MPURI)." "ERROR"
+		internal_failure-report "$MESSAGE_ID" > $FOLDER_PATH/assessment_result.xml
+            else
+                logging $TEMPLATE_IDENTIFIER "Analysis completed successfully (BASE_MPURI = $BASE_MPURI, MESSAGE_ID: $MESSAGE_ID), check ${FOLDER_PATH}/analysis_output.{stdout,stderr} for artifacts." "INFO"
+
+                sed '/^$/d' $FOLDER_TO_SAVE_REPORTS/report > $FOLDER_TO_SAVE_REPORTS/report.xml
+                rm -f $FOLDER_TO_SAVE_REPORTS/report
+
+                ${SECANT_PATH}/tools/assessment.py "$TEMPLATE_IDENTIFIER" "$FOLDER_TO_SAVE_REPORTS/report.xml" "$VERSION" "$BASE_MPURI" "$MESSAGE_ID" >> $FOLDER_PATH/assessment_result.xml
+                if [ $? -ne 0 ]; then
+                    logging "$TEMPLATE_ID" "Failed to process the probes outcome, exiting" "ERROR"
+                    exit 1
+                fi
+	    fi
 
             if [ "$TEST_RUN" = "no" ]; then
-                if [ $ret -eq 0 ]; then
+                if [ $msg_ret -eq 0 ]; then
                     ${SECANT_PATH}/tools/argo_produce.py --mode push --niftyID $TEMPLATE_IDENTIFIER --messageID $MESSAGE_ID --path $FOLDER_PATH/assessment_result.xml --base_mpuri $BASE_MPURI
+		    [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
                 fi
             fi
-            [ "$DELETE_TEMPLATES" = "yes" ] && delete_template_and_images $TEMPLATE_ID
         ) &
     fi
 done

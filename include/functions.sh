@@ -272,9 +272,9 @@ analyse_template()
                 break
             fi
             if $have_cloud_init; then
-                CLOUD_INIT=$(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP cloud-init status)
+                CLOUD_INIT=$(ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP cloud-init status 2>/dev/null)
                 if [ $? -ne 0 ]; then
-                    logging $TEMPLATE_ID "Cloud-init missing on VM. Analyse running..." "INFO"
+                    logging $TEMPLATE_ID "Cloud-init status missing on VM. Analyse running..." "INFO"
                     have_cloud_init=false
                     continue
                 fi
@@ -297,12 +297,12 @@ analyse_template()
 }
 
 cloud-init_status() {
-    scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP:/var/lib/cloud/data/status.json /tmp/${TEMPLATE_ID}_status.json
+    ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP "sudo cat /var/lib/cloud/data/status.json" > /tmp/${TEMPLATE_ID}_status.json 2>/dev/null
     if [ $? -ne 0 ]; then
         sleep 10
         continue
     else
-        scp -q -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP:/var/lib/cloud/data/status.json /tmp/${TEMPLATE_ID}_result.json
+	ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o PreferredAuthentications=publickey secant@$IP "sudo cat /var/lib/cloud/data/result.json" > /tmp/${TEMPLATE_ID}_result.json 2>/dev/null
         if [ $? -ne 0 ]; then
             sleep 10
             continue
@@ -323,5 +323,17 @@ cloud-init_status() {
             fi
         fi
     fi
-    rm /tmp/${TEMPLATE_ID}_status.json /tmp/${TEMPLATE_ID}_result.json 2> /dev/null
+    rm /tmp/${TEMPLATE_ID}_status.json /tmp/${TEMPLATE_ID}_result.json 2>/dev/null
+}
+
+internal_failure-report() {
+  echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<SECANT>
+  <VERSION>1.0</VERSION>
+  <IMAGE_ID/>
+  <DATE>$(date +%s)</DATE>
+  <OUTCOME>INTERNAL_FAILURE</OUTCOME>
+  <OUTCOME_DESCRIPTION>Internal failure in cloud platform.</OUTCOME_DESCRIPTION>
+  <MESSAGEID>$1</MESSAGEID>
+</SECANT>"
 }
