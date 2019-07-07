@@ -21,7 +21,7 @@ cloud_shutdown_vm()
 #grep
 cloud_get_vm_ids()
 {
-    IDS=$(openstack server list -f json | jq '.[].ID')
+    IDS=$(openstack server list -f json | jq -r '.[].ID')
     if [ $? -ne 0 ]; then
         return 1
     fi
@@ -29,7 +29,7 @@ cloud_get_vm_ids()
 
 cloud_get_template_ids()
 {
-    IDS=$(openstack image list -f json | jq '.[].ID')
+    IDS=$(openstack image list -f json | jq -r '.[].ID')
     if [ $? -ne 0 ]; then
         return 1
     fi
@@ -43,7 +43,7 @@ cloud_vm_query()
     if [ $? -ne 0 ]; then
         return 1
     fi
-    VM_RESULT=$("$CLOUD_QUERY" | jq '.$QUERY')
+    VM_RESULT=$("$CLOUD_QUERY" | jq -r '.$QUERY')
     if [ -z "$VM_RESULT" ]; then
         return 1
     fi
@@ -58,7 +58,7 @@ cloud_template_query()
     if [ $? -ne 0 ]; then
         return 1
     fi
-    TEMP_RESULT=$("$CLOUD_QUERY" | jq '.$QUERY')
+    TEMP_RESULT=$("$CLOUD_QUERY" | jq -r '.$QUERY')
     if [ -z "$TEMP_RESULT" ]; then
         return 1
     fi

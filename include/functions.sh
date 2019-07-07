@@ -26,7 +26,7 @@ delete_template_and_images()
         fi
         found="no"
         for VM_ID in "${VM_IDS[@]}"; do
-            templ_id=$(cloud_vm_query "$VM_ID" "//TEMPLATE_ID")
+            templ_id=$(cloud_vm_query "$VM_ID" "image")
             if [ $? -ne 0 ]; then
                 logging $TEMPLATE_IDENTIFIER "Failed to get the template ID for VM $VM_ID" "WARNING"
                 continue
@@ -38,7 +38,7 @@ delete_template_and_images()
     done
 
     # Get Template Images
-    images=($(cloud_template_query "$TEMPLATE_IDENTIFIER" "//DISK/IMAGE_ID/text()"))
+    images=($(cloud_template_query "$TEMPLATE_IDENTIFIER" "id"))
     if [ $? -ne 0 ]; then
         logging "$TEMPLATE_IDENTIFIER" "Failed to query //DISK/IMAGE_ID/text()" "ERROR"
         return 1
@@ -196,12 +196,12 @@ analyse_template()
     # make sure VM is put down on exit (regardless how the function finishes)
     trap "logging $TEMPLATE_IDENTIFIER 'Shutting down VM $VM_ID.' 'DEBUG'; cloud_shutdown_vm "$VM_ID"; trap - RETURN" RETURN
 
-    lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
+    lcm_state=$(cloud_vm_query "$VM_ID" "status")
     if [ $? -ne 0 ]; then
-        logging $TEMPLATE_IDENTIFIER "Failed to query //LCM_STATE/text() on VM with id $VM_ID" "ERROR"
+        logging $TEMPLATE_IDENTIFIER "Failed to query status on VM with id $VM_ID" "ERROR"
         return 1
     fi
-    vm_name=$(cloud_vm_query "$VM_ID" "//NAME/text()")
+    vm_name=$(cloud_vm_query "$VM_ID" "id")
     if [ $? -ne 0 ]; then
         logging $TEMPLATE_IDENTIFIER "Failed to query //NAME/text() on VM with id $VM_ID" "ERROR"
         return 1
@@ -217,9 +217,9 @@ analyse_template()
             return 1
         fi
         sleep 5s
-        lcm_state=$(cloud_vm_query "$VM_ID" "//LCM_STATE/text()")
+        lcm_state=$(cloud_vm_query "$VM_ID" "status")
         if [ $? -ne 0 ]; then
-            logging $TEMPLATE_IDENTIFIER "Failed to query //LCM_STATE/text() on VM with id $VM_ID" "ERROR"
+            logging $TEMPLATE_IDENTIFIER "Failed to query status on VM with id $VM_ID" "ERROR"
             return 1
         fi
     done
@@ -227,9 +227,9 @@ analyse_template()
     logging $TEMPLATE_IDENTIFIER "Virtual Machine $vm_name is now running." "DEBUG"
 
     # Get IPs
-    ipAddresses=($(cloud_vm_query "$VM_ID" "//NIC/IP/text()"))
+    ipAddresses=($(cloud_vm_query "$VM_ID" "addresses"))
     if [ $? -ne 0 ]; then
-        logging $TEMPLATE_IDENTIFIER "Failed to query //NIC/IP/text()" "ERROR"
+        logging $TEMPLATE_IDENTIFIER "Failed to query ip address" "ERROR"
         return 1
     fi
     if [ ${#ipAddresses[*]} -lt 1 ]; then
@@ -237,7 +237,7 @@ analyse_template()
         return 1
     fi
 
-    IP="${ipAddresses[0]}"
+    IP=$(cut -d "=" -f 2 <<< $ipAddresses)
     timeout=$((SECONDS+(5*60)))
     is_ssh=false
     while true; do
