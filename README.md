@@ -27,3 +27,5 @@ The assessment process consists of performing a set of steps.
 4. Make assessment using report and predefined rules.
 
 During the entire assessment process details about the process are stored in a log file (path can be specified in `secant.conf`). When the process is successfully ended, findings can be find in a report file and assessment results in a result file.
+
+The development work is co-funded by the EOSC-hub project (Horizon 2020) under Grant number 777536.
